@@ -17,6 +17,8 @@ class NetworkCreator:
         return networkGraph, neighborhoodMatrix
         
         
+        
+        
     def chooseNetworkGraph(self):
     
         if par.networkTopology == "AllToAll":

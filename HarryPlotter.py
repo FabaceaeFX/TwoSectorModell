@@ -8,3 +8,12 @@ class HarryPlotter:
     def __init__(self):
         
         pass
+        
+    def plotVector(self, _vector):
+    
+        plt.plot(_vector)
+        plt.show()
+        
+Mamamamiaaaa
+    
+        

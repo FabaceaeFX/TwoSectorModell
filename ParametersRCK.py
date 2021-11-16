@@ -1,38 +1,33 @@
 import numpy as np
 
 
-networkTopology   = 'AllToAll'
+networkTopology       = 'AllToAll'
 
-maxTime          = 100
+maxTime               = 100
 
-tau              = 20
+tau                   = 20
 
 
-numOfAgents      = 5
+numOfAgents           = 100
+  
+initSavingsRates      = np.random.rand(numOfAgents)
 
-initSavingsRates = np.random.rand(numOfAgents)
+initCapitals          = np.ones(numOfAgents)
 
-initCapitals     = np.ones(numOfAgents)
+initLabors            = np.ones(numOfAgents)
 
-initIncomes      = 0
+initIncomes           = np.zeros(numOfAgents)
 
-initConsumptions = 1 - initSavingsRates
+initConsumptions      = 1 - initSavingsRates
 
-depreciation     = 0.5
+totalLabor            = sum(initLabors)
 
-deltaS           = 0
+depreciation          = 0.5
 
-alpha            = 0.5
+deltaS                = 0
 
-beta             = 1 - alpha
+alpha                 = 0.5
 
-populationGrowthRate = 0
-
-initTotalCapital = initCapitals.sum()
-
-labors = np.ones(numOfAgents)
-
-totalLabor = np.array(sum(labors))
-
-initProduction = 0.0
+beta                  = 1 - alpha
         
+populationGrowthRate  = 0

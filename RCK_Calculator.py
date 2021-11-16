@@ -17,7 +17,6 @@ class RCK_Calculator:
         
     def getRCKVariables(self, _capitals, _savingsRates, _totalCapital):
         
-        #print(_totalCapital, "capitals", _capitals)
         self.calculateWages(_totalCapital)
         self.calculateRent(_totalCapital)
         self.calculateIncomes(_capitals)
@@ -38,7 +37,7 @@ class RCK_Calculator:
                                                              
     def calculateIncomes(self, _capitals):
     
-        self.incomes = self.rent * _capitals + self.wages * par.labors
+        self.incomes = self.rent * _capitals + self.wages * par.initLabors
     
                          
     def calculateProduction(self, _totalCapital):
