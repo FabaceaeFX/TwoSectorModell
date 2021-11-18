@@ -49,8 +49,9 @@ class RCK_Integrator:
         integrationInterval   = [_time, _updateTime]
 
         DEQResults            = odeint(self.RCKderiv, self.concatenatedInits, 
-                                integrationInterval, mxhnil=1, mxstep=5000000)[1]      
-        DEQResults            = self.filterOutNegativeResults(DEQResults)    
+                                integrationInterval)[1]      
+        DEQResults            = self.filterOutNegativeResults(DEQResults) 
+        print(DEQResults)   
                    
         self.capitalResults   = DEQResults[: par.numOfAgents]
         self.totalLaborResult = DEQResults[par.numOfAgents : ]

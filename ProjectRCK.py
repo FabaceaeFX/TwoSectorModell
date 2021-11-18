@@ -80,8 +80,8 @@ class ProjectRCK:
              self.updateFunctionState()
              self.appendResultsToArrays()
              
-        self.plot.plotVector(self.savingsRatesMatrix)
-        self.plot.plotVector(self.capitalsMatrix)
+        self.plot.plotVectors(self.capitalsMatrix, self.savingsRatesMatrix,\
+                              self.totalCapitalVector, self.productionVector)
      
        
  
