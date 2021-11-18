@@ -3,7 +3,7 @@ import numpy as np
 
 networkTopology       = 'AllToAll'
 
-maxTime               = 500
+maxTime               = 501
 
 tau                   = 20
 
