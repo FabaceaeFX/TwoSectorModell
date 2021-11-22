@@ -67,18 +67,18 @@ class ProjectRCK:
     def runModel(self):
     
         self.getNetworkGraph()
-        self.initializeVariables()
+        self.initialize()
         self.getVariables()
         self.wrightInitArrayEntries()
    
         while self.time < par.maxTime:
-            
-             self.getVariables()
-             self.pickNextUpdateTime()
-             self.pickCandidateAndBestNeighbor()
-             self.getResults()
-             self.updateFunctionState()
-             self.appendResultsToArrays()
+                
+            self.pickNextUpdateTime()
+            self.pickCandidateAndBestNeighbor()
+            self.getResults()
+            self.updateFunctionState()
+            self.getVariables()
+            self.appendResultsToArrays()
              
         self.plot.plotVectors(self.capitalsMatrix, self.savingsRatesMatrix,\
                               self.totalCapitalVector, self.productionVector)
@@ -90,16 +90,15 @@ class ProjectRCK:
         self.networkGraph, self.neighborhoodMatrix = self.creator.createNetwork()
                 
       
-    def initializeVariables(self):
+    def initialize(self):
     
-        self.capitals, self.savingsRates, \
-        self.incomes, self.consumptions, \
-        self.totalCapital, self.totalLabor         = self.init.getInitVariables()
+        self.capitals, self.savingsRates, self.labors = self.init.getInitVariables()
     
         
     def getVariables(self):
     
-        self.totalCapital = sum(self.capitals)     
+        self.totalCapital = sum(self.capitals)   
+        self.totalLabor   = sum(self.labors)  
         self.wages, self.rent, self.incomes,\
         self.production, self.consumptions = self.calculator.getRCKVariables(self.capitals,\
                                                        self.savingsRates, self.totalCapital)

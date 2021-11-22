@@ -16,12 +16,6 @@ initCapitals          = np.ones(numOfAgents)
 
 initLabors            = np.ones(numOfAgents)
 
-initIncomes           = np.zeros(numOfAgents)
-
-initConsumptions      = 1 - initSavingsRates
-
-totalLabor            = sum(initLabors)
-
 depreciation          = 0.5
 
 deltaS                = 0

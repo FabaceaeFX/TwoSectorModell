@@ -11,10 +11,7 @@ class Initializer:
     
         capitals            = par.initCapitals
         savingsRates        = par.initSavingsRates
-        incomes             = par.initIncomes
-        consumptions        = par.initConsumptions
-        totalCapital        = sum(par.initCapitals)
-        totalLabor          = par.totalLabor
+        labors              = par.labors
         
-        return (capitals, savingsRates, incomes, consumptions, totalCapital, totalLabor)
+        return (capitals, savingsRates, labors)
         
