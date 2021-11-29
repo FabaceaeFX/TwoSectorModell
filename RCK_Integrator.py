@@ -6,62 +6,121 @@ import ParametersRCK as par
 
 class RCK_Integrator:
 
-    def __init__(self):   
+    def __init__(self): 
+    
+        self.capitalsC   = 0
+        self.capitalsF   = 0
+        self.totalLaborC = 0
+        self.totalLaborF = 0  
+        self.sectorIdArray = 0
+        self.incomes     = 0
+        self.savingsRates = 0
        
-        self.capitalDots        = 0
-        self.totalLaborDot      = 0
-        self.capitalResults     = 0
-        self.totalLaborResult   = 0
+        self.capitalDotsC        = 0
+        self.capitalDotsF       = 0
+        
+        self.totalLaborDotC      = 0
+        self.totalLaborDotF      = 0
+        
+        self.capitalResultsC    = 0
+        self.capitalResultsF    = 0
+        
+        self.totalLaborResultC  = 0
+        self.totalLaborResultF   = 0
+        
+        self.concatenatedInitsC  = 0
+        self.concatenatedInitsF  = 0
         
     
-    def returnModelSolutions(self, _capitals, _savingsRates, _incomes, _time, _updateTime):
+    def returnModelSolutions(self, _capitalsC, _capitalsF, _totalLaborC,\
+                             _totalLaborF, _sectorIdArray, _incomes, _savingsRates,\
+                             _time, _updateTime):
         
-        self.concatenateCapitalsAndTotalLabor(_capitals)
-        self.getCapitalDots(_capitals, _savingsRates, _incomes)
+        self.capitalsC     = _capitalsC
+        self.capitalsF     = _capitalsF
+        self.incomes       = _incomes
+        self.totalLaborC   = _totalLaborC
+        self.totalLaborF   = _totalLaborF
+        self.sectorIdArray = _sectorIdArray
+        self.savingsRates  = _savingsRates
+        
+        
+        self.concatenateCapitalsAndTotalLabor()
+        self.getCapitalDots()
         self.getTotalLaborDot()
-        self.solveCapitalDEQ(_time, _updateTime)
+        self.solveCapitalDEQC(_time, _updateTime)
+        self.solveCapitalDEQF(_time, _updateTime)
         
 
-        return self.capitalResults, self.totalLaborResult
-        
-        
+        return self.capitalResultsC, self.capitalResultsF, self.totalLaborResultC,\
+               self.totalLaborResultF
+       
    
    
    
-   
-    def concatenateCapitalsAndTotalLabor(self, _capitals):
+    def concatenateCapitalsAndTotalLabor(self):
     
-        self.concatenatedInits = np.append(_capitals, par.totalLabor)
+        self.concatenatedInitsC = np.append(self.capitalsC, self.totalLaborC)
+        self.concatenatedInitsF = np.append(self.capitalsF, self.totalLaborF)
         
         
-    def getCapitalDots(self, _capitals, _savingsRates, _incomes):
+    def getCapitalDots(self):
     
-        self.capitalDots = _savingsRates * _incomes - _capitals * par.depreciation
+        indexC = np.where(self.sectorIdArray=='c')
+        indexF = np.where(self.sectorIdArray=='f')
+        depreciationTermC = -par.depreciation * self.capitalsC
+        depreciationTermF = -par.depreciation * self.capitalsF
+
+        self.capitalDotsC         = np.ones(par.numOfAgents) * depreciationTermC
+        self.capitalDotsF         = np.ones(par.numOfAgents) * depreciationTermF
+        
+        self.capitalDotsC[indexC] += self.savingsRates[indexC]*self.incomes[indexC]                             
+        self.capitalDotsF[indexF] += self.savingsRates[indexF]*self.incomes[indexF]
+        
     
     
     def getTotalLaborDot(self):
 
-        self.totalLaborDot = par.populationGrowthRate * par.totalLabor
+        self.totalLaborDotC = par.populationGrowthRate * self.totalLaborC
+        self.totalLaborDotF = par.populationGrowthRate * self.totalLaborF
         
     
-    def solveCapitalDEQ(self, _time, _updateTime):
+    def solveCapitalDEQC(self, _time, _updateTime):
     
         integrationInterval   = [_time, _updateTime]
 
-        DEQResults            = odeint(self.RCKderiv, self.concatenatedInits, 
+        DEQResults            = odeint(self.RCKderivC, self.concatenatedInitsC, 
                                 integrationInterval)[1]      
         DEQResults            = self.filterOutNegativeResults(DEQResults) 
-        print(DEQResults)   
                    
-        self.capitalResults   = DEQResults[: par.numOfAgents]
-        self.totalLaborResult = DEQResults[par.numOfAgents : ]
+        self.capitalResultsC   = DEQResults[: par.numOfAgents]
+        self.totalLaborResultC = DEQResults[par.numOfAgents : ]
         
         
-    def RCKderiv(self, _concatenatedInits, _integrationTime):
+    def solveCapitalDEQF(self, _time, _updateTime):
+    
+        integrationInterval   = [_time, _updateTime]
 
-        self.concatenatedDots = np.append(self.capitalDots, self.totalLaborDot)
+        DEQResults            = odeint(self.RCKderivF, self.concatenatedInitsF, 
+                                integrationInterval)[1]      
+        DEQResults            = self.filterOutNegativeResults(DEQResults) 
+                   
+        self.capitalResultsF   = DEQResults[: par.numOfAgents]
+        self.totalLaborResultF = DEQResults[par.numOfAgents : ]
         
-        return self.concatenatedDots
+        
+    def RCKderivC(self, _concatenatedInits, _integrationTime):
+
+        self.concatenatedDotsC = np.append(self.capitalDotsC, self.totalLaborDotC)
+        
+        return self.concatenatedDotsC
+        
+        
+    def RCKderivF(self, _concatenatedInits, _integrationTime):
+
+        self.concatenatedDotsF = np.append(self.capitalDotsF, self.totalLaborDotF)
+        
+        return self.concatenatedDotsF
         
         
     def filterOutNegativeResults(self, _DEQResults):

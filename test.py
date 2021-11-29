@@ -6,10 +6,33 @@ candidate                = 1
 neighbors                = list(networkGraph.neighbors(candidate))
 consumptions             = np.array([0,0,1,0,0,0])
 savingsRates             = np.array([7,8,9,10,11,12])
-NeighborhoodConsumptions = consumptions[neighbors]
-bestNeighbor             = neighbors[np.argmax(NeighborhoodConsumptions)]
-  
+capitalsC                = np.array([1,0,1,1,1,0])
+capitalsF                = np.array([0,1,0,0,0,1])
+
+
+cleanInvestorIndex       = np.where(capitalsC == 1)
+fossilInvestorIndex      = np.where(capitalsF == 1)
+
+sectorIdentityArray      = np.empty(6, np.unicode_)
+sectorIdentityArray[cleanInvestorIndex]=('c'+str(cleanInvestorIndex))
+sectorIdentityArray[fossilInvestorIndex]=('f'+str(fossilInvestorIndex))
 
 
 
-print("neighborsOfCandidate", neighbors, "consumptions", NeighborhoodConsumptions, "bestNeighbor", bestNeighbor, "savingCandidate", savingsRates[candidate], "savingBestNeigh", savingsRates[bestNeighbor] )
+
+indexC = np.where(sectorIdentityArray=='c')
+indexF = np.where(sectorIdentityArray=='f')
+
+capitalDotsC         = np.zeros(6)
+capitalDotsC[indexC] = savingsRates[indexC] - capitalsC[indexC]
+
+
+
+capitalsC                = np.array([1,0,1,1,1,0])
+capitalsF                = np.array([0,1,0,0,0,1])
+
+capitals = capitalsC + capitalsF
+
+
+
+print(capitals)
