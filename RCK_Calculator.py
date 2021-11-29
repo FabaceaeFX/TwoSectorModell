@@ -30,13 +30,13 @@ class RCK_Calculator:
         
     def calculateWages(self, _totalCapital, _totalLabor):
     
-        wages = par.depreciation * par.alpha * _totalLabor ** (par.alpha - 1) * _totalCapital ** par.beta
+        wages = par.alpha * _totalLabor ** (par.alpha - 1) * _totalCapital ** par.beta
         
         return wages
         
     def calculateRent(self, _totalCapital, _totalLabor):
     
-        rent = par.depreciation * par.beta * _totalLabor ** par.alpha * _totalCapital ** (par.beta - 1)
+        rent =  par.beta * _totalLabor ** par.alpha * _totalCapital ** (par.beta - 1)
         
         return rent
                                                              
@@ -54,7 +54,7 @@ class RCK_Calculator:
                          
     def calculateProduction(self, _totalCapital, _totalLabor):
     
-        production = par.depreciation * _totalCapital ** par.beta * _totalLabor ** par.alpha   
+        production = _totalCapital ** par.beta * _totalLabor ** par.alpha   
         
         return production
          

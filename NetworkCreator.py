@@ -11,8 +11,8 @@ class NetworkCreator:
         
     def createNetwork(self):
     
-        networkGraph       = self.chooseNetworkGraph()
-        neighborhoodMatrix = self.getNeighborhoodMatrix(networkGraph)
+        networkGraph           = self.chooseNetworkGraph()
+        neighborhoodMatrix     = self.getNeighborhoodMatrix(networkGraph)
             
         return networkGraph, neighborhoodMatrix
         
@@ -23,14 +23,14 @@ class NetworkCreator:
     
         if par.networkTopology == "AllToAll":
            
-            networkGraph = nx.complete_graph(par.numOfAgents)
+            networkGraph       = nx.complete_graph(par.numOfAgents)
             
         return networkGraph
             
             
     def getNeighborhoodMatrix(self, _networkGraph):
     
-        neighborhoodMatrix = nx.adj_matrix(_networkGraph).toarray()
+        neighborhoodMatrix     = nx.adj_matrix(_networkGraph).toarray()
         
         return neighborhoodMatrix
         

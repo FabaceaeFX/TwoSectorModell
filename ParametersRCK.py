@@ -18,8 +18,9 @@ initCapitalsF         = np.ones(numOfAgents)-initCapitalsC
 cleanInvestorIndex    = np.where(initCapitalsC == 1)
 fossilInvestorIndex   = np.where(initCapitalsF == 1)
 sectorIdentityArray   = np.empty(numOfAgents, np.unicode_)
-sectorIdentityArray[cleanInvestorIndex]=('c'+str(cleanInvestorIndex))
-sectorIdentityArray[fossilInvestorIndex]=('f'+str(fossilInvestorIndex))
+
+sectorIdentityArray[cleanInvestorIndex]  = ('c'+str(cleanInvestorIndex))
+sectorIdentityArray[fossilInvestorIndex] = ('f'+str(fossilInvestorIndex))
 
 initLaborsC           = initCapitalsC
 initLaborsF           = initCapitalsF

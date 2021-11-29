@@ -119,11 +119,11 @@ class ProjectRCK:
         
     def getVariables(self):
     
-        self.totalCapitalC = sum(self.capitalsC)   
-        self.totalCapitalF = sum(self.capitalsF)
+        self.totalCapitalC                         = sum(self.capitalsC)   
+        self.totalCapitalF                         = sum(self.capitalsF)
         
-        self.totalLaborC   = sum(self.laborsC)  
-        self.totalLaborF   = sum(self.laborsF)
+        self.totalLaborC                           = sum(self.laborsC)  
+        self.totalLaborF                           = sum(self.laborsF)
         
 
         self.wagesC, self.wagesF,\
@@ -139,19 +139,20 @@ class ProjectRCK:
 
     def pickCandidateAndBestNeighbor(self):
         
-        self.candidate, self.bestNeighbor = self.networkManager.pickCandidateAndBestNeighbor \
-                                              (self.networkGraph, self.consumptions)
+        self.candidate, self.bestNeighbor          = self.networkManager.pickCandidateAndBestNeighbor\
+                                                    (self.networkGraph, self.consumptions)
                 
                 
     def pickNextUpdateTime(self):
     
-        self.updateTime = self.time + np.random.exponential(scale=par.tau/par.numOfAgents)  
+        self.updateTime                            = self.time +\
+                                                     np.random.exponential(scale=par.tau/par.numOfAgents)  
          
     
     def getResults(self):
           
         self.capitalsC, self.capitalsF,\
-        self.totalLaborC, self.totalLaborF = self.integrator.returnModelSolutions\
+        self.totalLaborC, self.totalLaborF         = self.integrator.returnModelSolutions\
                                                      (self.capitalsC, self.capitalsF,\
                                                       self.totalLaborC, self.totalLaborF,\
                                                       self.sectorIdArray, self.incomes, self.savingsRates,\
@@ -174,46 +175,45 @@ class ProjectRCK:
                     
     def copySavingsRateOfBestNeighbor(self):
     
-        self.savingsRates[self.candidate] = self.savingsRates[self.bestNeighbor]
+        self.savingsRates[self.candidate]         = self.savingsRates[self.bestNeighbor]
         
         
     def copySectorOfBestNeighbor(self):
     
-        self.sectorIdArray[self.candidate] = self.sectorIdArray[self.bestNeighbor]  
+        self.sectorIdArray[self.candidate]        = self.sectorIdArray[self.bestNeighbor]  
         print(self.sectorIdArray)  
                                        
                     
     def updateSystemTime(self):
    
-        self.time = self.updateTime
-        #print(self.time)
+        self.time                                 = self.updateTime
             
      
     def wrightInitArrayEntries(self):
     
-        self.timeVector           = self.time
+        self.timeVector                           = self.time
         
-        self.totalLaborCVector    = self.totalLaborC
-        self.totalLaborFVector    = self.totalLaborF
+        self.totalLaborCVector                    = self.totalLaborC
+        self.totalLaborFVector                    = self.totalLaborF
         
-        self.wagesCVector         = self.wagesC
-        self.wagesFVector         = self.wagesF
+        self.wagesCVector                         = self.wagesC
+        self.wagesFVector                         = self.wagesF
         
-        self.rentCVector          = self.rentC
-        self.rentFVector          = self.rentF
+        self.rentCVector                          = self.rentC
+        self.rentFVector                          = self.rentF
         
-        self.productionCVector    = self.productionC
-        self.productionFVector    = self.productionF
+        self.productionCVector                    = self.productionC
+        self.productionFVector                    = self.productionF
         
-        self.totalCapitalCVector  = self.totalCapitalC
-        self.totalCapitalFVector  = self.totalCapitalF
+        self.totalCapitalCVector                  = self.totalCapitalC
+        self.totalCapitalFVector                  = self.totalCapitalF
         
-        self.capitalsCMatrix      = self.capitalsC
-        self.capitalsFMatrix      = self.capitalsF
+        self.capitalsCMatrix                      = self.capitalsC
+        self.capitalsFMatrix                      = self.capitalsF
         
-        self.incomesMatrix        = self.incomes
-        self.savingsRatesMatrix   = self.savingsRates
-        self.consumptionsMatrix   = self.consumptions  
+        self.incomesMatrix                        = self.incomes
+        self.savingsRatesMatrix                   = self.savingsRates
+        self.consumptionsMatrix                   = self.consumptions  
     
                  
     def appendResultsToArrays(self):          

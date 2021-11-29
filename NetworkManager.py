@@ -18,7 +18,7 @@ class NetworkManager:
    
     def pickCandidateAndBestNeighbor(self, _networkGraph, _consumptions):
     
-        self.networkGraph = _networkGraph
+        self.networkGraph          = _networkGraph
         
         self.pickCandidateToUpdate()
         self.loadNeighborhoodOfCandidate()
@@ -33,12 +33,12 @@ class NetworkManager:
             
     def pickCandidateToUpdate(self):
         
-        self.candidate = np.random.randint(par.numOfAgents)
+        self.candidate             = np.random.randint(par.numOfAgents)
  
         
     def loadNeighborhoodOfCandidate(self):
         
-        self.neighborsOfCandidate = list(self.networkGraph.neighbors(self.candidate))
+        self.neighborsOfCandidate  = list(self.networkGraph.neighbors(self.candidate))
         
         
     def getNeighborsConsumptions(self, _consumptions):
@@ -48,6 +48,6 @@ class NetworkManager:
     
     def chooseBestNeighborOfCandidate(self):
    
-        self.bestNeighbor = self.neighborsOfCandidate[np.argmax(self.neighborsConsumptions)]
+        self.bestNeighbor          = self.neighborsOfCandidate[np.argmax(self.neighborsConsumptions)]
        
   
