@@ -7,50 +7,34 @@ import ParametersRCK as par
 class RCK_Integrator:
 
     def __init__(self): 
-    
-        self.capitalsC           = 0
-        self.capitalsF           = 0
-        self.totalLaborC         = 0
-        self.totalLaborF         = 0  
-        self.sectorIdArray       = 0
-        self.incomes             = 0
-        self.savingsRates        = 0
-      
-        self.capitalDotsC        = 0
-        self.capitalDotsF        = 0
+          
+        self.capitalDotsC          = 0
+        self.capitalDotsF          = 0
         
-        self.totalLaborDotC      = 0
-        self.totalLaborDotF      = 0
+        self.totalLaborDotC        = 0
+        self.totalLaborDotF        = 0
         
-        self.capitalResultsC     = 0
-        self.capitalResultsF     = 0
+        self.capitalResultsC       = 0
+        self.capitalResultsF       = 0
         
-        self.totalLaborResultC   = 0
-        self.totalLaborResultF   = 0
+        self.totalLaborResultC     = 0
+        self.totalLaborResultF     = 0
         
-        self.concatenatedInitsC  = 0
-        self.concatenatedInitsF  = 0
+        self.concatenatedInitsC    = 0
+        self.concatenatedInitsF    = 0
         
     
     def returnModelSolutions(self, _capitalsC, _capitalsF, _totalLaborC,\
                              _totalLaborF, _sectorIdArray, _incomes, _savingsRates,\
                              _time, _updateTime):
         
-        self.capitalsC           = _capitalsC
-        self.capitalsF           = _capitalsF
-        self.incomes             = _incomes
-        self.totalLaborC         = _totalLaborC
-        self.totalLaborF         = _totalLaborF
-        self.sectorIdArray       = _sectorIdArray
-        self.savingsRates        = _savingsRates
         
         
-        self.concatenateCapitalsAndTotalLabor()
-        self.getCapitalDots()
-        self.getTotalLaborDot()
+        self.concatenateCapitalsAndTotalLabor(_capitalsC, _capitalsF, _totalLaborC, _totalLaborF)
+        self.getCapitalDots(_capitalsC, _capitalsF, _savingsRates, _incomes, _sectorIdArray)
+        self.getTotalLaborDot(_totalLaborC, _totalLaborF)
         self.solveCapitalDEQC(_time, _updateTime)
         self.solveCapitalDEQF(_time, _updateTime)
-        
 
         return self.capitalResultsC, self.capitalResultsF, self.totalLaborResultC,\
                self.totalLaborResultF
@@ -58,31 +42,31 @@ class RCK_Integrator:
    
    
    
-    def concatenateCapitalsAndTotalLabor(self):
+    def concatenateCapitalsAndTotalLabor(self, _capitalsC, _capitalsF, _totalLaborC, _totalLaborF):
     
-        self.concatenatedInitsC   = np.append(self.capitalsC, self.totalLaborC)
-        self.concatenatedInitsF   = np.append(self.capitalsF, self.totalLaborF)
+        self.concatenatedInitsC    = np.append(_capitalsC, _totalLaborC)
+        self.concatenatedInitsF    = np.append(_capitalsF, _totalLaborF)
         
         
-    def getCapitalDots(self):
-    
-        indexC                    = np.where(self.sectorIdArray=='c')
-        indexF                    = np.where(self.sectorIdArray=='f')
-        depreciationTermC         = -par.depreciation * self.capitalsC
-        depreciationTermF         = -par.depreciation * self.capitalsF
+    def getCapitalDots(self, _capitalsC, _capitalsF, _savingsRates, _incomes, _sectorIdArray):
+        
+        indexC                     = np.where(_sectorIdArray=='c')
+        indexF                     = np.where(_sectorIdArray=='f')
+        depreciationTermC          = -par.depreciation * _capitalsC
+        depreciationTermF          = -par.depreciation * _capitalsF
 
-        self.capitalDotsC         = np.ones(par.numOfAgents) * depreciationTermC
-        self.capitalDotsF         = np.ones(par.numOfAgents) * depreciationTermF
+        self.capitalDotsC          = np.ones(par.numOfAgents) * depreciationTermC
+        self.capitalDotsF          = np.ones(par.numOfAgents) * depreciationTermF
         
-        self.capitalDotsC[indexC] += self.savingsRates[indexC]*self.incomes[indexC]                             
-        self.capitalDotsF[indexF] += self.savingsRates[indexF]*self.incomes[indexF]
+        self.capitalDotsC[indexC] += _savingsRates[indexC]*_incomes[indexC]                             
+        self.capitalDotsF[indexF] += _savingsRates[indexF]*_incomes[indexF]
         
     
     
-    def getTotalLaborDot(self):
+    def getTotalLaborDot(self, _totalLaborC, _totalLaborF):
 
-        self.totalLaborDotC        = par.populationGrowthRate * self.totalLaborC
-        self.totalLaborDotF        = par.populationGrowthRate * self.totalLaborF
+        self.totalLaborDotC        = par.populationGrowthRate * _totalLaborC
+        self.totalLaborDotF        = par.populationGrowthRate * _totalLaborF
         
     
     def solveCapitalDEQC(self, _time, _updateTime):
@@ -92,7 +76,7 @@ class RCK_Integrator:
         DEQResults                 = odeint(self.RCKderivC, self.concatenatedInitsC, 
                                      integrationInterval)[1]      
         DEQResults                 = self.filterOutNegativeResults(DEQResults) 
-                   
+           
         self.capitalResultsC       = DEQResults[: par.numOfAgents]
         self.totalLaborResultC     = DEQResults[par.numOfAgents : ]
         
@@ -103,8 +87,9 @@ class RCK_Integrator:
 
         DEQResults                 = odeint(self.RCKderivF, self.concatenatedInitsF, 
                                      integrationInterval)[1]      
+
         DEQResults                 = self.filterOutNegativeResults(DEQResults) 
-                   
+              
         self.capitalResultsF       = DEQResults[: par.numOfAgents]
         self.totalLaborResultF     = DEQResults[par.numOfAgents : ]
         
@@ -125,9 +110,9 @@ class RCK_Integrator:
         
     def filterOutNegativeResults(self, _DEQResults):
    
-        filteredResults            = np.where(_DEQResults[0 : par.numOfAgents] > 0,\
-                                     _DEQResults[0 : par.numOfAgents], \
-                                     np.zeros(par.numOfAgents))
+        filteredResults            = np.where(_DEQResults > 0,\
+                                     _DEQResults, \
+                                     np.zeros(par.numOfAgents+1))
                                
         return filteredResults
         

@@ -11,46 +11,65 @@ class RCK_Calculator:
         
         
         
-    def getRCKVariables(self, _capitalsC, _capitalsF, _laborsC, _laborsF, _totalCapitalC, _totalCapitalF, _totalLaborC, _totalLaborF, _savingsRates):
+    def getRCKVariables(self, _capitalsC, _capitalsF, _laborsC, _laborsF, _savingsRates, _sectorIdArray):
         
-        wagesC        = self.calculateWages(_totalCapitalC, _totalLaborC)
-        wagesF        = self.calculateWages(_totalCapitalF, _totalLaborF)
-        rentC         = self.calculateRent(_totalCapitalC, _totalLaborC)
-        rentF         = self.calculateRent(_totalCapitalF, _totalLaborF)
-        incomesC      = self.calculateIncomes(_capitalsC, _capitalsF, rentC, rentF, wagesC, _laborsC)
-        incomesF      = self.calculateIncomes(_capitalsC, _capitalsF, rentC, rentF, wagesF, _laborsF)
-        mergedIncomes = self.mergeIncomes(incomesC, incomesF)
-        productionC   = self.calculateProduction(_totalCapitalC, _totalLaborC)
-        productionF   = self.calculateProduction(_totalCapitalF, _totalLaborF)
-        consumptions  = self.calculateConsumptions(_savingsRates, mergedIncomes)
+        totalCapitalC = sum(_capitalsC)   
+        totalCapitalF = sum(_capitalsF)
+        totalLaborC   = sum(_laborsC)  
+        totalLaborF   = sum(_laborsF)
+        occupNumberC  = sum(_sectorIdArray=='c')
+        occupNumberF  = sum(_sectorIdArray=='f')
         
-        return (wagesC, wagesF, rentC, rentF, productionC, productionF, mergedIncomes, consumptions)
+        wagesC        = self.calculateWages(totalCapitalC, totalLaborC)
+        wagesF        = self.calculateWages(totalCapitalF, totalLaborF)
+        rentC         = self.calculateRent(totalCapitalC, totalLaborC)
+        rentF         = self.calculateRent(totalCapitalF, totalLaborF)
+        incomes       = self.calculateIncomes(_capitalsC, _capitalsF, rentC, rentF, wagesC, wagesF, _laborsC, _laborsF)
+        productionC   = self.calculateProduction(totalCapitalC, totalLaborC)
+        productionF   = self.calculateProduction(totalCapitalF, totalLaborF)
+        consumptions  = self.calculateConsumptions(_savingsRates, incomes)
+        avgSavingsC   = self.getAvgSavingsC(occupNumberC, _savingsRates, _sectorIdArray)
+        avgSavingsF   = self.getAvgSavingsF(occupNumberF, _savingsRates, _sectorIdArray)
+        
+        
+        return (wagesC, wagesF, rentC, rentF, productionC, productionF, incomes, consumptions,\
+                totalCapitalC, totalCapitalF, occupNumberC, occupNumberF, avgSavingsC, avgSavingsF)
         
         
         
     def calculateWages(self, _totalCapital, _totalLabor):
-    
-        wages = par.alpha * _totalLabor ** (par.alpha - 1) * _totalCapital ** par.beta
+        
+        if _totalLabor != 0:
+        
+            wages = par.alpha * _totalLabor ** (par.alpha - 1) * _totalCapital ** par.beta
+            
+        else: 
+        
+            wages = 0
         
         return wages
         
+        
     def calculateRent(self, _totalCapital, _totalLabor):
     
-        rent =  par.beta * _totalLabor ** par.alpha * _totalCapital ** (par.beta - 1)
+        if _totalCapital != 0:
+        
+            rent =  par.beta * _totalLabor ** par.alpha * _totalCapital ** (par.beta - 1)
+            
+        else: 
+        
+            rent = 0
         
         return rent
+              
                                                              
-    def calculateIncomes(self, _capitalsC, _capitalsF, _rentC, _rentF, _wages, _labors):
+    def calculateIncomes(self, _capitalsC, _capitalsF, _rentC, _rentF, _wagesC,\
+                          _wagesF, _laborsC, _laborsF):
     
-        incomes = _rentC * _capitalsC + _rentF * _capitalsF + _wages * _labors
+        incomes = _wagesC * _laborsC + _wagesF * _laborsF + _rentC * _capitalsC + _rentF * _capitalsF 
         
         return incomes
-    
-    def mergeIncomes(self, _incomesC, _incomesF):
-    
-        mergedIncomes = _incomesC + _incomesF
-        
-        return mergedIncomes
+           
                          
     def calculateProduction(self, _totalCapital, _totalLabor):
     
@@ -64,4 +83,25 @@ class RCK_Calculator:
         consumptions = _incomes * (1 - _savingsRates)
         
         return consumptions
- 
+        
+        
+    def getAvgSavingsC(self, _occupNumberC, _savingsRates, _sectorIdArray):
+    
+        if _occupNumberC != 0:
+            avgSavingsC = sum(_savingsRates[_sectorIdArray=='c'])/_occupNumberC
+            
+        else:
+            avgSavingsC = 0
+            
+        return avgSavingsC
+        
+        
+    def getAvgSavingsF(self, _occupNumberF, _savingsRates, _sectorIdArray):
+    
+        if _occupNumberF != 0:
+            avgSavingsF = sum(_savingsRates[_sectorIdArray=='f'])/_occupNumberF
+            
+        else:
+            avgSavingsF = 0
+        
+        return avgSavingsF

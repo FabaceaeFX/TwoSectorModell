@@ -74,21 +74,34 @@ class ProjectRCK:
         self.productionCVector   = 0
         self.productionFVector   = 0
         
+        self.occupNumberC        = 0
+        self.occupNumberF        = 0
+        self.occupNumberVectorC  = 0
+        self.occupNumberVectorF  = 0
+        
         self.incomes             = 0
         self.incomesMatrix       = 0
       
         self.savingsRates        = 0
         self.savingsRatesMatrix  = 0
+                
+        self.avgSavingsC         = 0
+        self.avgSavingsF         = 0
+        self.avgSavingsVectorC   = 0
+        self.avgSavingsVectorF   = 0
+
         
         self.consumptions        = 0
         self.consumptionsMatrix  = 0
+      
+      
       
     
     def runModel(self):
     
         self.getNetworkGraph()
-        self.initialize()
-        self.getVariables()
+        self.initializeVariables()
+        self.calculateVariables()
         self.wrightInitArrayEntries()
    
         while self.time < par.maxTime:
@@ -96,12 +109,25 @@ class ProjectRCK:
             self.pickNextUpdateTime()
             self.pickCandidateAndBestNeighbor()
             self.getResults()
-            self.updateFunctionState()
-            self.getVariables()
+            self.copySavingsRateOfBestNeighbor()
+            self.copySectorOfBestNeighbor()
+            self.updateSystemTime()
+            self.calculateVariables()
             self.appendResultsToArrays()
+
              
         self.plot.plotVectors(self.capitalsCMatrix, self.capitalsFMatrix,\
-                              self.totalCapitalCVector, self.totalCapitalFVector)
+                              self.totalCapitalCVector, self.totalCapitalFVector,\
+                              self.rentCVector, self.rentFVector,\
+                              self.wagesCVector, self.wagesFVector,\
+                              self.productionCVector, self.productionFVector,\
+                              self.occupNumberVectorC, self.occupNumberVectorF,\
+                              self.incomesMatrix, self.savingsRatesMatrix,\
+                              self.avgSavingsVectorC, self.avgSavingsVectorF,\
+                              self.consumptionsMatrix)
+     
+     
+     
      
        
  
@@ -110,31 +136,25 @@ class ProjectRCK:
         self.networkGraph, self.neighborhoodMatrix = self.creator.createNetwork()
                 
       
-    def initialize(self):
+    def initializeVariables(self):
     
         self.capitalsC, self.capitalsF,\
         self.laborsC, self.laborsF,\
         self.sectorIdArray, self.savingsRates      = self.init.getInitVariables()
     
         
-    def getVariables(self):
-    
-        self.totalCapitalC                         = sum(self.capitalsC)   
-        self.totalCapitalF                         = sum(self.capitalsF)
-        
-        self.totalLaborC                           = sum(self.laborsC)  
-        self.totalLaborF                           = sum(self.laborsF)
-        
+    def calculateVariables(self):
 
         self.wagesC, self.wagesF,\
         self.rentC, self.rentF,\
         self.productionC, self.productionF,\
-        self.incomes, self.consumptions            = self.calculator.getRCKVariables\
+        self.incomes, self.consumptions,\
+        self.totalCapitalC, self.totalCapitalF,\
+        self.occupNumberC, self.occupNumberF,\
+        self.avgSavingsC, self.avgSavingsF         = self.calculator.getRCKVariables\
                                                     (self.capitalsC, self.capitalsF,\
                                                      self.laborsC, self.laborsF,\
-                                                     self.totalCapitalC,self.totalCapitalF,\
-                                                     self.totalLaborC, self.totalLaborF,\
-                                                     self.savingsRates)
+                                                     self.savingsRates, self.sectorIdArray)
           
 
     def pickCandidateAndBestNeighbor(self):
@@ -153,67 +173,63 @@ class ProjectRCK:
           
         self.capitalsC, self.capitalsF,\
         self.totalLaborC, self.totalLaborF         = self.integrator.returnModelSolutions\
-                                                     (self.capitalsC, self.capitalsF,\
-                                                      self.totalLaborC, self.totalLaborF,\
-                                                      self.sectorIdArray, self.incomes, self.savingsRates,\
-                                                      self.time, self.updateTime)
-                    
-     
-    def updateFunctionState(self):
-                             
-        self.updateSavingsRates()
-        self.updateSystemTime()
-        
-           
-    def updateSavingsRates(self):
-    
-        if self.consumptions[self.bestNeighbor] > self.consumptions[self.candidate]:
-                  
-            self.copySavingsRateOfBestNeighbor()
-            self.copySectorOfBestNeighbor()
+                                                    (self.capitalsC, self.capitalsF,\
+                                                     self.totalLaborC, self.totalLaborF,\
+                                                     self.sectorIdArray, self.incomes, self.savingsRates,\
+                                                     self.time, self.updateTime)         
             
                     
     def copySavingsRateOfBestNeighbor(self):
     
-        self.savingsRates[self.candidate]         = self.savingsRates[self.bestNeighbor]
+        if self.consumptions[self.bestNeighbor] > self.consumptions[self.candidate]:
+        
+            imitationError                         = np.random.uniform(par.startEps, par.endEps, size=1)
+    
+            self.savingsRates[self.candidate]      = self.savingsRates[self.bestNeighbor] + imitationError
         
         
     def copySectorOfBestNeighbor(self):
     
-        self.sectorIdArray[self.candidate]        = self.sectorIdArray[self.bestNeighbor]  
-        print(self.sectorIdArray)  
-                                       
+        self.sectorIdArray[self.candidate]         = self.sectorIdArray[self.bestNeighbor]  
+
                     
     def updateSystemTime(self):
    
-        self.time                                 = self.updateTime
-            
+        self.time                                  = self.updateTime
+        
+        
      
     def wrightInitArrayEntries(self):
     
-        self.timeVector                           = self.time
+        self.timeVector                            = self.time
         
-        self.totalLaborCVector                    = self.totalLaborC
-        self.totalLaborFVector                    = self.totalLaborF
+        self.totalLaborCVector                     = self.totalLaborC
+        self.totalLaborFVector                     = self.totalLaborF
         
-        self.wagesCVector                         = self.wagesC
-        self.wagesFVector                         = self.wagesF
+        self.wagesCVector                          = self.wagesC
+        self.wagesFVector                          = self.wagesF
         
-        self.rentCVector                          = self.rentC
-        self.rentFVector                          = self.rentF
+        self.rentCVector                           = self.rentC
+        self.rentFVector                           = self.rentF
         
-        self.productionCVector                    = self.productionC
-        self.productionFVector                    = self.productionF
+        self.productionCVector                     = self.productionC
+        self.productionFVector                     = self.productionF
         
-        self.totalCapitalCVector                  = self.totalCapitalC
-        self.totalCapitalFVector                  = self.totalCapitalF
+        self.totalCapitalCVector                   = self.totalCapitalC
+        self.totalCapitalFVector                   = self.totalCapitalF
         
-        self.capitalsCMatrix                      = self.capitalsC
-        self.capitalsFMatrix                      = self.capitalsF
+        self.capitalsCMatrix                       = self.capitalsC
+        self.capitalsFMatrix                       = self.capitalsF
         
-        self.incomesMatrix                        = self.incomes
-        self.savingsRatesMatrix                   = self.savingsRates
-        self.consumptionsMatrix                   = self.consumptions  
+        self.incomesMatrix                         = self.incomes
+        self.savingsRatesMatrix                    = self.savingsRates
+        self.consumptionsMatrix                    = self.consumptions  
+        
+        self.occupNumberVectorC                    = self.occupNumberC
+        self.occupNumberVectorF                    = self.occupNumberF
+        
+        self.avgSavingsVectorC                     = self.avgSavingsC
+        self.avgSavingsVectorF                     = self.avgSavingsF
     
                  
     def appendResultsToArrays(self):          
@@ -235,6 +251,12 @@ class ProjectRCK:
         self.totalCapitalCVector  = np.append(self.totalCapitalCVector, self.totalCapitalC)
         self.totalCapitalFVector  = np.append(self.totalCapitalFVector, self.totalCapitalF)
         
+        self.avgSavingsVectorC    = np.append(self.avgSavingsVectorC, self.avgSavingsC)
+        self.avgSavingsVectorF    = np.append(self.avgSavingsVectorF, self.avgSavingsF)
+        
+        self.occupNumberVectorC   = np.append(self.occupNumberVectorC, self.occupNumberC)
+        self.occupNumberVectorF   = np.append(self.occupNumberVectorF, self.occupNumberF)
+        
         self.capitalsCMatrix      = np.vstack((self.capitalsCMatrix, self.capitalsC))
         self.capitalsFMatrix      = np.vstack((self.capitalsFMatrix, self.capitalsF))
         
@@ -242,6 +264,7 @@ class ProjectRCK:
         self.savingsRatesMatrix   = np.vstack((self.savingsRatesMatrix, self.savingsRates))
         self.consumptionsMatrix   = np.vstack((self.consumptionsMatrix, self.consumptions))   
               
+         
             
     
   
