@@ -14,7 +14,9 @@ initSavingsRates      = np.random.rand(numOfAgents)
 
 initCapitals          = np.ones(numOfAgents)
 
-initLabors            = np.ones(numOfAgents)
+initLabors                = np.ones(numOfAgents)
+
+totalLabor            = sum(initLabors)
 
 depreciation          = 0.5
 

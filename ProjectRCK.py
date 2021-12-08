@@ -68,16 +68,17 @@ class ProjectRCK:
     
         self.getNetworkGraph()
         self.initialize()
-        self.getVariables()
+        self.calculateVariables()
         self.wrightInitArrayEntries()
    
         while self.time < par.maxTime:
-                
-            self.pickNextUpdateTime()
-            self.pickCandidateAndBestNeighbor()
+             
+            self.pickNextUpdateTime()   
             self.getResults()
-            self.updateFunctionState()
-            self.getVariables()
+            self.pickCandidateAndBestNeighbor()
+            self.updateSavingsRates()
+            self.updateSystemTime()
+            self.calculateVariables()
             self.appendResultsToArrays()
              
         self.plot.plotVectors(self.capitalsMatrix, self.savingsRatesMatrix,\
@@ -92,52 +93,36 @@ class ProjectRCK:
       
     def initialize(self):
     
-        self.capitals, self.savingsRates, self.labors = self.init.getInitVariables()
+        self.capitals, self.savingsRates,\
+        self.labors                                = self.init.getInitVariables()
     
         
-    def getVariables(self):
+    def calculateVariables(self):
     
-        self.totalCapital = sum(self.capitals)   
-        self.totalLabor   = sum(self.labors)  
+        self.totalCapital                          = sum(self.capitals)   
+        self.totalLabor                            = sum(self.labors)  
         self.wages, self.rent, self.incomes,\
-        self.production, self.consumptions = self.calculator.getRCKVariables(self.capitals,\
-                                                       self.savingsRates, self.totalCapital)
+        self.production, self.consumptions         = self.calculator.getRCKVariables(self.capitals,\
+                                                     self.savingsRates, self.totalCapital)
           
 
     def pickCandidateAndBestNeighbor(self):
         
-        self.candidate, self.bestNeighbor = self.networkManager.pickCandidateAndBestNeighbor \
-                                              (self.networkGraph, self.consumptions)
+        self.candidate, self.bestNeighbor          = self.networkManager.pickCandidateAndBestNeighbor \
+                                                    (self.networkGraph, self.consumptions)
                 
                 
     def pickNextUpdateTime(self):
     
-        self.updateTime = self.time + np.random.exponential(scale=par.tau/par.numOfAgents)  
+        self.updateTime                            = self.time + np.random.exponential(scale=par.tau/par.numOfAgents)  
          
     
     def getResults(self):
           
-        self.newCapitals, self.newTotalLabor = self.integrator.returnModelSolutions \
-                                               (self.capitals, self.savingsRates, \
-                                                self.incomes, self.time, self.updateTime)
+        self.capitals, self.totalLabor             = self.integrator.returnModelSolutions \
+                                                    (self.capitals, self.savingsRates, \
+                                                     self.incomes, self.time, self.updateTime)
                     
-     
-    def updateFunctionState(self):
-                             
-        self.updateCapitals()
-        self.updateTotalLabor()
-        self.updateSavingsRates()
-        self.updateSystemTime()
-        
-        
-    def updateCapitals(self):
-    
-        self.capitals = self.newCapitals
-        
-        
-    def updateTotalLabor(self):
-    
-        self.totalLabor = self.newTotalLabor
         
            
     def updateSavingsRates(self):
@@ -149,13 +134,12 @@ class ProjectRCK:
                     
     def copySavingsRateOfBestNeighor(self):
     
-        self.savingsRates[self.candidate] = self.savingsRates[self.bestNeighbor]    
+        self.savingsRates[self.candidate]          = self.savingsRates[self.bestNeighbor]    
                                        
                     
     def updateSystemTime(self):
    
-        self.time = self.updateTime
-        print(self.time)
+        self.time                                  = self.updateTime
             
      
     def wrightInitArrayEntries(self):

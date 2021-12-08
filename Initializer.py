@@ -11,7 +11,7 @@ class Initializer:
     
         capitals            = par.initCapitals
         savingsRates        = par.initSavingsRates
-        labors              = par.labors
+        labors              = par.initLabors
         
         return (capitals, savingsRates, labors)
         
