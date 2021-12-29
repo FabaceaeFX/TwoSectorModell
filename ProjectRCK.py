@@ -1,7 +1,10 @@
 from scipy.integrate import odeint
+from numba import njit
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import pdb            
+import timeit
 
 import Initializer      as init
 import RCK_Integrator   as rck
@@ -95,15 +98,20 @@ class ProjectRCK:
         self.consumptionsMatrix  = 0
       
       
-      
+    def createBifurcationDiagramm(self):
     
+        while self.bifurcationParameter < par.bifurcationParameterMax:
+        
+            self.runModel()
+            print(self.savingsRates)
     def runModel(self):
     
         self.getNetworkGraph()
         self.initializeVariables()
         self.calculateVariables()
         self.wrightInitArrayEntries()
-   
+        self.setTrace()
+        
         while self.time < par.maxTime:
                 
             self.pickNextUpdateTime()
@@ -113,6 +121,8 @@ class ProjectRCK:
             self.copySectorOfBestNeighbor()
             self.updateSystemTime()
             self.calculateVariables()
+            self.wrightInitArrayEntries()
+            self.setTrace()
             self.appendResultsToArrays()
 
              
@@ -142,7 +152,7 @@ class ProjectRCK:
         self.laborsC, self.laborsF,\
         self.sectorIdArray, self.savingsRates      = self.init.getInitVariables()
     
-        
+      
     def calculateVariables(self):
 
         self.wagesC, self.wagesF,\
@@ -182,10 +192,14 @@ class ProjectRCK:
     def copySavingsRateOfBestNeighbor(self):
     
         if self.consumptions[self.bestNeighbor] > self.consumptions[self.candidate]:
-        
-            imitationError                         = np.random.uniform(par.startEps, par.endEps, size=1)
     
-            self.savingsRates[self.candidate]      = self.savingsRates[self.bestNeighbor] + imitationError
+            self.savingsRates[self.candidate]         = self.savingsRates[self.bestNeighbor] +\
+                                                            self.calculator.getImitationError()
+            
+            while (self.savingsRates[self.candidate] > 1) or (self.savingsRates[self.candidate] < 0):
+                    
+                    self.savingsRates[self.candidate] = self.savingsRates[self.bestNeighbor] +\
+                                                            self.calculator.getImitationError()
         
         
     def copySectorOfBestNeighbor(self):
@@ -265,7 +279,9 @@ class ProjectRCK:
         self.consumptionsMatrix   = np.vstack((self.consumptionsMatrix, self.consumptions))   
               
          
-            
+    def setTrace(self):
+    
+        pdb.set_trace()    
     
   
         
