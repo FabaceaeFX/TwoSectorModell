@@ -1,6 +1,4 @@
 import numpy as np
-from numba import njit
-import pdb
 
 import ParametersRCK as par
 
@@ -12,20 +10,20 @@ class RCK_Calculator:
         pass
         
         
- 
+        
     def getRCKVariables(self, _capitalsC, _capitalsF, _laborsC, _laborsF, _savingsRates, _sectorIdArray):
         
-        totalCapitalC = np.int64(sum(_capitalsC))   
-        totalCapitalF = np.int64(sum(_capitalsF))
-        totalLaborC   = np.int64(sum(_laborsC))  
-        totalLaborF   = np.int64(sum(_laborsF))
-        occupNumberC  = np.int64(sum(_sectorIdArray=='c'))
-        occupNumberF  = np.int64(sum(_sectorIdArray=='f'))
+        totalCapitalC = sum(_capitalsC)   
+        totalCapitalF = sum(_capitalsF)
+        totalLaborC   = sum(_laborsC)  
+        totalLaborF   = sum(_laborsF)
+        occupNumberC  = sum(_sectorIdArray=='c')
+        occupNumberF  = sum(_sectorIdArray=='f')
         
-        wagesC        = np.asarray(self.calculateWages(totalCapitalC, totalLaborC))
-        wagesF        = np.asarray(self.calculateWages(totalCapitalF, totalLaborF))
-        rentC         = np.single(self.calculateRent(totalCapitalC, totalLaborC))
-        rentF         = np.single(self.calculateRent(totalCapitalF, totalLaborF))
+        wagesC        = self.calculateWages(totalCapitalC, totalLaborC)
+        wagesF        = self.calculateWages(totalCapitalF, totalLaborF)
+        rentC         = self.calculateRent(totalCapitalC, totalLaborC)
+        rentF         = self.calculateRent(totalCapitalF, totalLaborF)
         incomes       = self.calculateIncomes(_capitalsC, _capitalsF, rentC, rentF, wagesC, wagesF, _laborsC, _laborsF)
         productionC   = self.calculateProduction(totalCapitalC, totalLaborC)
         productionF   = self.calculateProduction(totalCapitalF, totalLaborF)
@@ -36,12 +34,9 @@ class RCK_Calculator:
         
         return (wagesC, wagesF, rentC, rentF, productionC, productionF, incomes, consumptions,\
                 totalCapitalC, totalCapitalF, occupNumberC, occupNumberF, avgSavingsC, avgSavingsF)
-                
-                
-                
         
         
-
+        
     def calculateWages(self, _totalCapital, _totalLabor):
         
         if _totalLabor != 0:
@@ -59,22 +54,18 @@ class RCK_Calculator:
     
         if _totalCapital != 0:
         
-            print(par.beta, _totalLabor, par.alpha, _totalCapital, par.beta)
-            rent =  par.beta * (_totalLabor ** par.alpha) * (_totalCapital ** (par.beta - 1))
-            print(rent, 'rent after Calculatiom')
+            rent =  par.beta * _totalLabor ** par.alpha * _totalCapital ** (par.beta - 1)
             
         else: 
         
             rent = 0
         
-        print(rent, 'rent before return')
         return rent
               
-                                                
+                                                             
     def calculateIncomes(self, _capitalsC, _capitalsF, _rentC, _rentF, _wagesC,\
                           _wagesF, _laborsC, _laborsF):
-        
-        
+    
         incomes = _wagesC * _laborsC + _wagesF * _laborsF + _rentC * _capitalsC + _rentF * _capitalsF 
         
         return incomes
@@ -86,7 +77,7 @@ class RCK_Calculator:
         
         return production
          
-    @njit   
+        
     def calculateConsumptions(self, _savingsRates, _incomes):
     
         consumptions = _incomes * (1 - _savingsRates)
@@ -114,13 +105,3 @@ class RCK_Calculator:
             avgSavingsF = 0
         
         return avgSavingsF
-        
-    
-    def getImitationError(self):
-    
-        imitationError    = np.random.uniform(par.startEps, par.endEps, size=1)
-        
-        return imitationError
-        
-        
-        

@@ -1,10 +1,7 @@
 from scipy.integrate import odeint
-from numba import njit
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import pdb            
-import timeit
 
 import Initializer      as init
 import RCK_Integrator   as rck
@@ -19,15 +16,15 @@ import ParametersRCK    as par
 
 class ProjectRCK:
     
-    def __init__(self, _Parameter, _Initializer, _RCKCalculator, _RCKIntegrator, \
-                                       _NetworkCreator, _NetworkManager, _Plotter):
+    def __init__(self):
     
-        self.init                = _Initializer
-        self.calculator          = _RCKCalculator
-        self.integrator          = _RCKIntegrator
-        self.creator             = _NetworkCreator
-        self.networkManager      = _NetworkManager
-        self.plot                = _Plotter
+        self.Parameter        = par
+        self.init             = init.Initializer()
+        self.calculator       = calc.RCK_Calculator()
+        self.integrator       = rck.RCK_Integrator()
+        self.creator          = nc.NetworkCreator()
+        self.networkManager   = nh.NetworkManager()
+        self.plot             = plot.HarryPlotter()
     
         self.networkGraph        = 0
         self.neighborhoodMatrix  = 0
@@ -98,20 +95,15 @@ class ProjectRCK:
         self.consumptionsMatrix  = 0
       
       
-    def createBifurcationDiagramm(self):
+      
     
-        while self.bifurcationParameter < par.bifurcationParameterMax:
-        
-            self.runModel()
-            print(self.savingsRates)
     def runModel(self):
     
         self.getNetworkGraph()
         self.initializeVariables()
         self.calculateVariables()
         self.wrightInitArrayEntries()
-        self.setTrace()
-        
+   
         while self.time < par.maxTime:
                 
             self.pickNextUpdateTime()
@@ -121,8 +113,6 @@ class ProjectRCK:
             self.copySectorOfBestNeighbor()
             self.updateSystemTime()
             self.calculateVariables()
-            self.wrightInitArrayEntries()
-            self.setTrace()
             self.appendResultsToArrays()
 
              
@@ -152,7 +142,7 @@ class ProjectRCK:
         self.laborsC, self.laborsF,\
         self.sectorIdArray, self.savingsRates      = self.init.getInitVariables()
     
-      
+        
     def calculateVariables(self):
 
         self.wagesC, self.wagesF,\
@@ -173,6 +163,8 @@ class ProjectRCK:
                                                     (self.networkGraph, self.consumptions)
                 
                 
+                
+              
     def pickNextUpdateTime(self):
     
         self.updateTime                            = self.time +\
@@ -193,13 +185,11 @@ class ProjectRCK:
     
         if self.consumptions[self.bestNeighbor] > self.consumptions[self.candidate]:
     
-            self.savingsRates[self.candidate]         = self.savingsRates[self.bestNeighbor] +\
-                                                            self.calculator.getImitationError()
+            self.savingsRates[self.candidate]      = self.savingsRates[self.bestNeighbor] + np.random.uniform(par.startEps, par.endEps, size=1)
             
             while (self.savingsRates[self.candidate] > 1) or (self.savingsRates[self.candidate] < 0):
-                    
-                    self.savingsRates[self.candidate] = self.savingsRates[self.bestNeighbor] +\
-                                                            self.calculator.getImitationError()
+            
+                self.savingsRates[self.candidate]  = self.savingsRates[self.bestNeighbor] + np.random.uniform(par.startEps, par.endEps, size=1)
         
         
     def copySectorOfBestNeighbor(self):
@@ -279,9 +269,7 @@ class ProjectRCK:
         self.consumptionsMatrix   = np.vstack((self.consumptionsMatrix, self.consumptions))   
               
          
-    def setTrace(self):
-    
-        pdb.set_trace()    
+            
     
   
         
@@ -289,16 +277,7 @@ class ProjectRCK:
 if __name__ == '__main__':
 
 
-    myParameter        = par
-    myInitializer      = init.Initializer()
-    myRCKCalculator    = calc.RCK_Calculator()
-    myRCKIntegrator    = rck.RCK_Integrator()
-    myNetworkCreator   = nc.NetworkCreator()
-    myNetworkManager   = nh.NetworkManager()
-    myHarryPlotter     = plot.HarryPlotter()
-    myProjectRCK       = ProjectRCK(myParameter, myInitializer, myRCKCalculator, \
-                         myRCKIntegrator, myNetworkCreator, myNetworkManager, \
-                         myHarryPlotter)
+    myProjectRCK       = ProjectRCK()
 
     
     
