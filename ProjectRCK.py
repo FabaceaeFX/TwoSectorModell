@@ -3,8 +3,10 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+import NumbaCalculator  as num
 import Initializer      as init
 import RCK_Integrator   as rck
+import RCK_IntegratorTest as test
 import RCK_Calculator   as calc
 import networkx         as nx
 import NetworkCreator   as nc
@@ -18,13 +20,7 @@ class ProjectRCK:
     
     def __init__(self):
     
-        self.Parameter        = par
-        self.init             = init.Initializer()
-        self.calculator       = calc.RCK_Calculator()
-        self.integrator       = rck.RCK_Integrator()
-        self.creator          = nc.NetworkCreator()
-        self.networkManager   = nh.NetworkManager()
-        self.plot             = plot.HarryPlotter()
+        self.Parameter           = par
     
         self.networkGraph        = 0
         self.neighborhoodMatrix  = 0
@@ -84,6 +80,10 @@ class ProjectRCK:
       
         self.savingsRates        = 0
         self.savingsRatesMatrix  = 0
+        self.savingsRatesC       = 0       
+        self.savingsRatesF       = 0
+        self.savingsRatesMatrixC = 0
+        self.savingsRatesMatrixF = 0
                 
         self.avgSavingsC         = 0
         self.avgSavingsF         = 0
@@ -93,88 +93,108 @@ class ProjectRCK:
         
         self.consumptions        = 0
         self.consumptionsMatrix  = 0
+        
+        self.microDataFrame      = 0
+        self.macroDataFrame      = 0
       
       
       
     
-    def runModel(self):
+    def runModel(self, _tau):
     
         self.getNetworkGraph()
         self.initializeVariables()
         self.calculateVariables()
         self.wrightInitArrayEntries()
-   
+        self.initializeMicroDataFrame()
+        self.initializeMacroDataFrame()
+      
         while self.time < par.maxTime:
                 
-            self.pickNextUpdateTime()
+            self.pickNextUpdateTime(_tau)
             self.pickCandidateAndBestNeighbor()
             self.getResults()
             self.copySavingsRateOfBestNeighbor()
             self.copySectorOfBestNeighbor()
+            self.updateSavingsSector()
             self.updateSystemTime()
             self.calculateVariables()
             self.appendResultsToArrays()
 
-             
-        self.plot.plotVectors(self.capitalsCMatrix, self.capitalsFMatrix,\
+         
+       # return self.savingsRatesC, self.savingsRatesF
+        
+            
+        plot.HarryPlotter().plotVectors(self.capitalsCMatrix, self.capitalsFMatrix,\
                               self.totalCapitalCVector, self.totalCapitalFVector,\
                               self.rentCVector, self.rentFVector,\
                               self.wagesCVector, self.wagesFVector,\
                               self.productionCVector, self.productionFVector,\
                               self.occupNumberVectorC, self.occupNumberVectorF,\
-                              self.incomesMatrix, self.savingsRatesMatrix,\
+                              self.savingsRatesMatrixC, self.savingsRatesMatrixF,\
                               self.avgSavingsVectorC, self.avgSavingsVectorF,\
-                              self.consumptionsMatrix)
+                              self.incomesMatrix, self.consumptionsMatrix)
      
-     
+        
      
      
        
  
     def getNetworkGraph(self):
     
-        self.networkGraph, self.neighborhoodMatrix = self.creator.createNetwork()
-                
+        self.networkGraph, self.neighborhoodMatrix = nc.NetworkCreator().createNetwork()
+        print(self.networkGraph, self.neighborhoodMatrix)
       
     def initializeVariables(self):
     
         self.capitalsC, self.capitalsF,\
         self.laborsC, self.laborsF,\
-        self.sectorIdArray, self.savingsRates      = self.init.getInitVariables()
+        self.sectorIdArray, self.savingsRates      = init.Initializer().getInitVariables()
+        print( "capitalsC", self.capitalsC, "capitalsF",  self.capitalsF, "laborsC", self.laborsC, "laborsF", self.laborsF, "sectorIdArray", self.sectorIdArray, "savingsRates", self.savingsRates)
     
         
     def calculateVariables(self):
 
-        self.wagesC, self.wagesF,\
-        self.rentC, self.rentF,\
-        self.productionC, self.productionF,\
-        self.incomes, self.consumptions,\
-        self.totalCapitalC, self.totalCapitalF,\
-        self.occupNumberC, self.occupNumberF,\
-        self.avgSavingsC, self.avgSavingsF         = self.calculator.getRCKVariables\
-                                                    (self.capitalsC, self.capitalsF,\
-                                                     self.laborsC, self.laborsF,\
-                                                     self.savingsRates, self.sectorIdArray)
+        self.totalCapitalC       = sum(self.capitalsC)
+        self.totalCapitalF       = sum(self.capitalsF)
+        self.totalLaborC         = sum(self.laborsC)
+        self.totalLaborF         = sum(self.laborsF)
+        self.occupNumberC        = sum(self.sectorIdArray=='c')
+        self.occupNumberF        = sum(self.sectorIdArray=='f')
+        savingsSumC              = sum(self.savingsRates[self.sectorIdArray=='c'])
+        savingsSumF              = sum(self.savingsRates[self.sectorIdArray=='c'])
+        
+        self.wagesC       = num.calculateWages(self.totalCapitalC, self.totalLaborC)
+        self.wagesF       = num.calculateWages(self.totalCapitalF, self.totalLaborF)
+        self.rentC        = num.calculateRents(self.totalCapitalC, self.totalLaborC)
+        self.rentF        = num.calculateRents(self.totalCapitalF, self.totalLaborF)
+        self.productionC  = num.calculateProduction(self.totalCapitalC, self.totalLaborC)
+        self.productionF  = num.calculateProduction(self.totalCapitalF, self.totalLaborF)
+        self.consumptions = num.calculateConsumptions(self.savingsRates, self.incomes)
+        self.avgSavingsC  = num.calculateAvgSavingsC(self.occupNumberC, self.savingsRates, self.sectorIdArray, savingsSumC)
+        self.avgSavingsF  = num.calculateAvgSavingsF(self.occupNumberF, self.savingsRates, self.sectorIdArray, savingsSumF)
+        self.incomes      = num.calculateIncomes(self.capitalsC, self.capitalsF, self.rentC, self.rentF,\
+                                                    self.wagesC, self.wagesF, self.laborsC, self.laborsF)
           
 
     def pickCandidateAndBestNeighbor(self):
         
-        self.candidate, self.bestNeighbor          = self.networkManager.pickCandidateAndBestNeighbor\
+        self.candidate, self.bestNeighbor          = nh.NetworkManager().pickCandidateAndBestNeighbor\
                                                     (self.networkGraph, self.consumptions)
                 
                 
                 
               
-    def pickNextUpdateTime(self):
+    def pickNextUpdateTime(self, _tau):
     
         self.updateTime                            = self.time +\
-                                                     np.random.exponential(scale=par.tau/par.numOfAgents)  
+                                                     np.random.exponential(scale=_tau/par.numOfAgents)  
          
     
     def getResults(self):
           
         self.capitalsC, self.capitalsF,\
-        self.totalLaborC, self.totalLaborF         = self.integrator.returnModelSolutions\
+        self.totalLaborC, self.totalLaborF         = test.RCK_IntegratorTest().returnModelSolutions\
                                                     (self.capitalsC, self.capitalsF,\
                                                      self.totalLaborC, self.totalLaborF,\
                                                      self.sectorIdArray, self.incomes, self.savingsRates,\
@@ -196,7 +216,11 @@ class ProjectRCK:
     
         self.sectorIdArray[self.candidate]         = self.sectorIdArray[self.bestNeighbor]  
 
-                    
+    def updateSavingsSector(self):
+    
+        self.savingsRatesC = self.savingsRates[self.sectorIdArray=='c']  
+        self.savingsRatesF = self.savingsRates[self.sectorIdArray=='f']
+                     
     def updateSystemTime(self):
    
         self.time                                  = self.updateTime
@@ -234,6 +258,9 @@ class ProjectRCK:
         
         self.avgSavingsVectorC                     = self.avgSavingsC
         self.avgSavingsVectorF                     = self.avgSavingsF
+        
+        self.savingsRatesMatrixC                   = self.savingsRatesC 
+        self.savingsRatesMatrixF                   = self.savingsRatesF   
     
                  
     def appendResultsToArrays(self):          
@@ -266,9 +293,73 @@ class ProjectRCK:
         
         self.incomesMatrix        = np.vstack((self.incomesMatrix, self.incomes))
         self.savingsRatesMatrix   = np.vstack((self.savingsRatesMatrix, self.savingsRates))
-        self.consumptionsMatrix   = np.vstack((self.consumptionsMatrix, self.consumptions))   
+        self.consumptionsMatrix   = np.vstack((self.consumptionsMatrix, self.consumptions)) 
+        
+        self.savingsRatesMatrixC  = np.append(self.savingsRatesMatrixC, self.savingsRatesC)
+        self.savingsRatesMatrixF  = np.append(self.savingsRatesMatrixF, self.savingsRatesF)     
               
          
+    def initializeMicroDataFrame(self):
+    
+        self.microDataFrame = pd.DataFrame(columns=["capitalsC", 
+                                                    "capitalsF",
+                                                    "savingsRates",
+                                                    "incomes",
+                                                    "consumptions"])
+                                                    
+    def initializeMacroDataFrame(self):
+    
+        self.macroDataFrame = pd.DataFrame(columns=["totalCapitalC", 
+                                                    "totalCapitalF",
+                                                    "totalLaborC",
+                                                    "totalLaborF",
+                                                    "wagesC",
+                                                    "wagesF",
+                                                    "rentC",
+                                                    "rentF",
+                                                    "productionC",
+                                                    "productionF",
+                                                    "avgSavingsC",
+                                                    "avgSavingsF",
+                                                    "occupNumberC",
+                                                    "occupNumberF"])
+                                                    
+    def updateMicroDataFrame(self):
+    
+        microDataFrame = pd.DataFrame({"capitalsC": [self.capitalsC], 
+                                        "capitalsF": [self.capitalsF],
+                                        "savingsRates": [self.savingsRates],
+                                        "incomes":[self.incomes],
+                                        "consumptions":[self.consumptions]}, 
+                                        index = np.array([self.time]))
+                                    
+        self.microDataFrame = self.microDataFrame.append(microDataFrame)
+        
+        
+        
+                                                    
+    def updateMacroDataFrame(self):
+    
+        macroDataFrame = pd.DataFrame({"totalCapitalC": self.totalCapitalC, 
+                                    "totalCapitalF": self.totalCapitalF,
+                                    "totalLaborC": self.totalLaborC,
+                                    "totalLaborF": self.totalLaborF,
+                                    "wagesC": self.wagesC,
+                                    "wagesF": self.wagesF,
+                                    "rentC": self.rentC,
+                                    "rentF": self.rentF,
+                                    "productionC": self.productionC,
+                                    "productionF": self.productionF,
+                                    "avgSavingsC": self.avgSavingsC,
+                                    "avgSavingsF": self.avgSavingsF,
+                                    "occupNumberC": self.occupNumberC,
+                                    "occupNumberF": self.occupNumberF},
+                                    index = np.array([self.time]))
+                                    
+        self.macroDataFrame = self.macroDataFrame.append(macroDataFrame)
+
+ 
+        
             
     
   
@@ -278,10 +369,9 @@ if __name__ == '__main__':
 
 
     myProjectRCK       = ProjectRCK()
-
+    tau=100
     
-    
-    myProjectRCK.runModel()
+    myProjectRCK.runModel(tau)
 
 
 ''' END '''

@@ -15,9 +15,9 @@ class HarryPlotter:
                           _wagesCVector, _wagesFVector,\
                           _productionCVector, _productionFVector,\
                           _occupNumberVectorC, _occupNumberVectorF,\
-                          _incomesMatrix, _savingsRatesMatrix,\
+                          _savingsRatesMatrixC, _savingsRatesMatrixF,\
                           _avgSavingsVectorC, _avgSavingsVectorF,\
-                          _consumptionsMatrix):
+                          _incomesMatrix, _consumptionsMatrix):
         
     
         if par.plotSetting == 'Two':
@@ -32,13 +32,13 @@ class HarryPlotter:
             axs[0, 1].set(xlabel='t', ylabel='Ki')
             axs[0, 1].set_title("Capitals fossil")
             
-            axs[1, 0].plot(_totalCapitalCVector)
-            axs[1, 0].set(xlabel='t', ylabel='K')
-            axs[1, 0].set_title("Total capital in clean sector")
+            axs[1, 0].plot(_savingsRatesMatrixC)
+            axs[1, 0].set(xlabel='t', ylabel='Si')
+            axs[1, 0].set_title("Savings-rates in sector C")
             
-            axs[1, 1].plot(_totalCapitalFVector)
-            axs[1, 1].set(xlabel='t', ylabel='K')
-            axs[1, 1].set_title("Total capital in fossil Sector")
+            axs[1, 1].plot(_savingsRatesMatrixF)
+            axs[1, 1].set(xlabel='t', ylabel='Si')
+            axs[1, 1].set_title("Savings-rates in sector F")
             
       
             
@@ -128,6 +128,34 @@ class HarryPlotter:
             plt.show()
         
             
+    def plotDataFrame(self, _microDataFrame, _macroDataFrame):
         
+        print(_microDataFrame["capitalsC"].to_numpy()[0,:])
+        
+        fig, axs = plt.subplots(2, 2)
+
+        axs[0, 0].plot(_microDataFrame["capitalsC"].to_numpy()[0])
+        axs[0, 0].set(xlabel='t', ylabel='Ki')
+        axs[0, 0].set_title("Capitals clean")
+
+        axs[0, 1].plot(_microDataFrame["capitalsF"].to_numpy()[0])
+        axs[0, 1].set(xlabel='t', ylabel='Ki')
+        axs[0, 1].set_title("Capitals fossil")
+
+        axs[1, 0].plot(_microDataFrame["consumptions"].to_numpy()[0])
+        axs[1, 0].set(xlabel='t', ylabel='K')
+        axs[1, 0].set_title("Total capital in clean sector")
+
+        axs[1, 1].plot(_microDataFrame["savingsRates"].to_numpy()[0])
+        axs[1, 1].set(xlabel='t', ylabel='K')
+        axs[1, 1].set_title("Total capital in fossil Sector")
+
+
+
+        fig.tight_layout()
+
+        plt.show()
+            
+           
         
     

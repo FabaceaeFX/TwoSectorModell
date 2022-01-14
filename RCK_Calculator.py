@@ -1,5 +1,5 @@
 import numpy as np
-
+from numba import njit
 import ParametersRCK as par
 
 
@@ -20,6 +20,8 @@ class RCK_Calculator:
         occupNumberC  = sum(_sectorIdArray=='c')
         occupNumberF  = sum(_sectorIdArray=='f')
         
+        ones = np.ones(len(_savingsRates))
+        
         wagesC        = self.calculateWages(totalCapitalC, totalLaborC)
         wagesF        = self.calculateWages(totalCapitalF, totalLaborF)
         rentC         = self.calculateRent(totalCapitalC, totalLaborC)
@@ -27,7 +29,7 @@ class RCK_Calculator:
         incomes       = self.calculateIncomes(_capitalsC, _capitalsF, rentC, rentF, wagesC, wagesF, _laborsC, _laborsF)
         productionC   = self.calculateProduction(totalCapitalC, totalLaborC)
         productionF   = self.calculateProduction(totalCapitalF, totalLaborF)
-        consumptions  = self.calculateConsumptions(_savingsRates, incomes)
+        consumptions  = self.calculateConsumptions(_savingsRates, incomes, ones)
         avgSavingsC   = self.getAvgSavingsC(occupNumberC, _savingsRates, _sectorIdArray)
         avgSavingsF   = self.getAvgSavingsF(occupNumberF, _savingsRates, _sectorIdArray)
         
@@ -77,15 +79,15 @@ class RCK_Calculator:
         
         return production
          
-        
-    def calculateConsumptions(self, _savingsRates, _incomes):
+    @njit      
+    def calculateConsumptions(self, _savingsRates, _incomes, _ones):
     
-        consumptions = _incomes * (1 - _savingsRates)
+        consumptions = _incomes + _ones - _savingsRates
         
         return consumptions
         
         
-    def getAvgSavingsC(self, _occupNumberC, _savingsRates, _sectorIdArray):
+    def calculateAvgSavingsC(self, _occupNumberC, _savingsRates, _sectorIdArray):
     
         if _occupNumberC != 0:
             avgSavingsC = sum(_savingsRates[_sectorIdArray=='c'])/_occupNumberC
@@ -96,7 +98,7 @@ class RCK_Calculator:
         return avgSavingsC
         
         
-    def getAvgSavingsF(self, _occupNumberF, _savingsRates, _sectorIdArray):
+    def calculateAvgSavingsF(self, _occupNumberF, _savingsRates, _sectorIdArray):
     
         if _occupNumberF != 0:
             avgSavingsF = sum(_savingsRates[_sectorIdArray=='f'])/_occupNumberF

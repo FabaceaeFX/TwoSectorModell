@@ -1,45 +1,32 @@
 import numpy as np
 
 
-networkTopology       = 'AllToAll'
+networkTopology        = 'AllToAll'
 
-maxTime               = 10000
+maxTime                = 10000
 
-tau                   = 500
+tauMin                 = 402
+tauMax                 = 405
+deltaTau               = 1
+iterationMax           = 3
 
-startEps              = -0.01
-endEps                = 0.01
-numOfAgents           = 100
-  
-initSavingsRates      = np.random.rand(numOfAgents)
+startEps               = -0.01
+endEps                 = 0.01
+numOfAgents            = 100
+ 
 
-initCapitalsC         = np.ones(numOfAgents)
-#initCapitalsC         = np.random.binomial(n=1, p=0.5, size=[numOfAgents])
-initCapitalsF         = np.zeros(numOfAgents)
-#initCapitalsF         = np.ones(numOfAgents)-initCapitalsC
+depreciation           = 0.05
 
-cleanInvestorIndex    = np.where(initCapitalsC == 1)
-fossilInvestorIndex   = np.where(initCapitalsF == 1)
-sectorIdentityArray   = np.empty(numOfAgents, np.unicode_)
+deltaS                 = 0
 
-sectorIdentityArray[cleanInvestorIndex]  = ('c'+str(cleanInvestorIndex))
-sectorIdentityArray[fossilInvestorIndex] = ('f'+str(fossilInvestorIndex))
+alpha                  = 0.5
 
-initLaborsC           = np.random.uniform(1/numOfAgents, 0.01, size=numOfAgents)
-initLaborsF           = np.zeros(numOfAgents)
-
-depreciation          = 0.05
-
-deltaS                = 0
-
-alpha                 = 0.5
-
-beta                  = 1 - alpha
+beta                   = 1 - alpha
         
-populationGrowthRate  = 0
+populationGrowthRate   = 0
 
 
 
 
 
-plotSetting           = 'Single'
+plotSetting            = 'Two'
