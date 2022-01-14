@@ -106,8 +106,8 @@ class ProjectRCK:
         self.initializeVariables()
         self.calculateVariables()
         self.wrightInitArrayEntries()
-        self.initializeMicroDataFrame()
-        self.initializeMacroDataFrame()
+        #self.initializeMicroDataFrame()
+        #self.initializeMacroDataFrame()
       
         while self.time < par.maxTime:
                 
