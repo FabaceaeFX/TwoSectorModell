@@ -69,15 +69,30 @@ mc = list(microDataFrame["capitalsC"])
 #plt.show()
 
 
-@njit      
-def calculateConsumptions(savingsRates, incomes, ones):
+#print(capitalsC.shape)
+#capitalsC = np.expand_dims(capitalsC, axis=(0))
+#capitalsC = np.expand_dims(capitalsC, axis=(0))
+#print(capitalsC.shape)
+
+@njit
+def func(capitalsC):
+    capitalsCMatrix      = np.vstack((capitalsC, capitalsC))
+    print(capitalsCMatrix.shape)
+    capitalsC            = np.expand_dims(capitalsC, axis=0)
+    capitalsCMatrix      = np.vstack((capitalsCMatrix, capitalsC))
+    capitalsCMatrix      = np.vstack((capitalsCMatrix, capitalsC))
+    capitalsCMatrix      = np.vstack((capitalsCMatrix, capitalsC))
     
-    consumptions = incomes + ones - savingsRates
-        
-    return consumptions
+    print(capitalsCMatrix, capitalsCMatrix.shape)
+    
+
+if __name__ == '__main__':
+
+    capitalsC = np.zeros(5)
+    func(capitalsC)
 
 
-
+''' END '''
 
 
 
