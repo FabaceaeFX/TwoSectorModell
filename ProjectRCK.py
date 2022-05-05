@@ -2,17 +2,12 @@ from scipy.integrate import odeint
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import time
+import timeit
 
-import NumbaCalculator  as numCalc
-import NumbaAppender    as numPend
 import Initializer      as init
-import RCK_Integrator   as rck
-import RCK_IntegratorTest as test
-import RCK_Calculator   as calc
+import RCK_Integrator   as integr
 import networkx         as nx
 import NetworkCreator   as nc
-import NetworkManager   as nm
 import HarryPlotter     as plot
 import ParametersRCK    as par
 
@@ -21,156 +16,91 @@ import ParametersRCK    as par
 class ProjectRCK:
     
     def __init__(self):
-    
-        self.Parameter           = par
-        self.manager             = nm.NetworkManager()
-        self.integrator          = test.RCK_IntegratorTest()
-        self.numPend             = numPend
-        self.numCalc             = numCalc
-        
-    
-        self.networkGraph        = 0
-        self.neighborhoodMatrix  = 0
-        
-        self.time                = 0
-        self.updateTime          = 0
-        self.timeVector          = 0
-        
-        self.candidate           = 0
-        self.neighbors           = 0
-        self.bestNeighbor        = 0
-        
-        self.sectorIdArray       = 0
-        
-        self.capitalsC           = 0
-        self.capitalsF           = 0
-        self.capitalsCMatrix     = 0
-        self.capitalsFMatrix     = 0
-        
-        self.laborsC             = 0
-        self.laborsF             = 0
-        self.laborsCMatrix       = 0
-        self.laborsFMatrix       = 0
-        
-        self.totalCapitalC       = 0
-        self.totalCapitalF       = 0
-        self.totalCapitalCVector = 0
-        self.totalCapitalFVector = 0
-        
-        self.totalLaborC         = 0
-        self.totalLaborF         = 0
-        self.totalLaborCVector   = 0
-        self.totalLaborFVector   = 0
-        
-        self.wagesC              = 0
-        self.wagesF              = 0
-        self.wagesCVector        = 0
-        self.wagesFVector        = 0
-        
-        self.rentC               = 0
-        self.rentF               = 0
-        self.rentCVector         = 0
-        self.rentFVector         = 0
-        
-        self.productionC         = 0
-        self.productionF         = 0
-        self.productionCVector   = 0
-        self.productionFVector   = 0
-        
-        self.occupNumberC        = 0
-        self.occupNumberF        = 0
-        self.occupNumberCVector  = 0
-        self.occupNumberFVector  = 0
-        
-        self.incomes             = 0
-        self.incomesMatrix       = 0
-      
-        self.savingsRates        = 0
-        self.savingsRatesMatrix  = 0
-        self.savingsRatesC       = 0       
-        self.savingsRatesF       = 0
-        self.savingsRatesCMatrix = 0
-        self.savingsRatesFMatrix = 0
-                
-        self.avgSavingsC         = 0
-        self.avgSavingsF         = 0
-        self.avgSavingsCVector   = 0
-        self.avgSavingsFVector   = 0
-
-        
-        self.consumptions        = 0
-        self.consumptionsMatrix  = 0
-        
-      
-    
-    def runModel(self, _tau):
-    
-        tic = time.perf_counter()
-
-
    
 
+        self.index               = 0
+        
+
+    
+    def runModel(self, _tau, _seed, _subvention):
+    
+        self.setRandomSeed(_seed)
         self.getNetworkGraph()
+        self.createUpdateArray(_tau)
+        self.createUpdateTimeline()
+        self.createEmptyArrays()
         self.initializeVariables()
-        self.calculateVariables()
+        self.calculateVariables(_subvention)
         self.updateSavingsSector()
-        self.wrightInitArrayEntries()
+        self.pickCandidateAndBestNeighbor()
+        self.fillResults()
+        self.index+=1
     
       
-        while self.time < (_tau/par.numOfAgents)*par.maxTime:
-                
-            self.pickNextUpdateTime(_tau)
+        while self.index < len(self.updateTimeline):
+            
+            
+            self.getResults(self.updateTimeline[self.index-1], self.updateTimeline[self.index])
             self.pickCandidateAndBestNeighbor()
-            self.getResults()
             self.copySavingsRateOfBestNeighbor()
-            self.copySectorOfBestNeighbor()
-            self.updateSavingsSector()
-            self.updateSystemTime()           
-            self.calculateVariables()
-            self.appendResultsToArrays()
-
+            self.updateSavingsSector()     
+            self.calculateVariables(_subvention)
+            self.fillResults()
+            self.index += 1
+   
+        #return(self.savingsRatesC, self.savingsRatesF)
         
-        toc = time.perf_counter()
-
-        print(f"RunModel{toc - tic:0.4f} seconds")    
-        
-        plot.HarryPlotter().plotVectors(self.capitalsCMatrix, self.capitalsFMatrix,\
-                              self.totalCapitalCVector, self.totalCapitalFVector,\
-                              self.rentCVector, self.rentFVector,\
-                              self.wagesCVector, self.wagesFVector,\
-                              self.productionCVector, self.productionFVector,\
-                              self.occupNumberCVector, self.occupNumberFVector,\
-                              self.savingsRatesCMatrix, self.savingsRatesFMatrix,\
-                              self.avgSavingsCVector, self.avgSavingsFVector,\
-                              self.incomesMatrix, self.consumptionsMatrix)
+        plot.HarryPlotter().plotVectors(self.updateTimeline,\
+                                        self.capitalsCMatrix, self.capitalsFMatrix,\
+                                        self.totalCapitalCVector, self.totalCapitalFVector,\
+                                        self.avgCapitalCVector, self.avgCapitalFVector,\
+                                        self.rentCVector, self.rentFVector,\
+                                        self.wagesCVector, self.wagesFVector,\
+                                        self.productionCVector, self.productionFVector,\
+                                        self.occupNumberCVector, self.occupNumberFVector,\
+                                        self.maxConsumCVector, self.maxConsumFVector,\
+                                        self.savingsRatesCMatrix, self.savingsRatesFMatrix,\
+                                        self.avgSavingsCVector, self.avgSavingsFVector,\
+                                        self.incomesCMatrix, self.incomesFMatrix, \
+                                        self.incomesMatrix, self.consumptionsMatrix,\
+                                        self.sectorIdMatrix, self.bestNeighborMatrix,\
+                                        self.eqCapitalCVector, self.eqCapitalFVector)
      
         
      
      
-       
+    def setRandomSeed(self, _seed):
+    
+        np.random.seed(par.seed)
+           
  
     def getNetworkGraph(self):
         
-        tic = time.perf_counter()
-        self.networkGraph, self.neighborhoodMatrix = nc.NetworkCreator().createNetwork()
-        toc = time.perf_counter()
+        self.networkGraph, self.neighborhoodMatrix  = nc.NetworkCreator().createNetwork()
+        
 
-        print(f"getNetworkGraph{toc - tic:0.4f} seconds")  
+    def createUpdateArray(self, _tau):
+    
+        self.updateArray = np.random.exponential(scale=_tau/par.numOfAgents, size=int((par.numOfAgents/_tau)*par.tmax))
+        
+        
+    def createUpdateTimeline(self):
+    
+        self.updateTimeline                           = np.zeros(len(self.updateArray)+1)
+        self.updateTimeline[0]                        = 0
+        self.updateTimeline[1:]                       = np.cumsum(self.updateArray)
+        
         
     def initializeVariables(self):
         
-        tic = time.perf_counter()
         self.capitalsC, self.capitalsF,\
         self.laborsC, self.laborsF,\
-        self.sectorIdArray, self.savingsRates      = init.Initializer().getInitVariables()
-        toc = time.perf_counter()
-
-        print(f"InitializeVariables{toc - tic:0.4f} seconds")   
+        self.sectorIdArray, self.savingsRates,\
+        self.bestNeighborVector                  = init.Initializer().getInitVariables() 
     
         
-    def calculateVariables(self):
+    def calculateVariables(self,  _subvention):
 
-        tic = time.perf_counter()
         self.totalCapitalC       = sum(self.capitalsC)
         self.totalCapitalF       = sum(self.capitalsF)
         self.totalLaborC         = sum(self.laborsC)
@@ -178,220 +108,275 @@ class ProjectRCK:
         self.occupNumberC        = sum(self.sectorIdArray=='c')
         self.occupNumberF        = sum(self.sectorIdArray=='f')
         savingsSumC              = sum(self.savingsRates[self.sectorIdArray=='c'])
-        savingsSumF              = sum(self.savingsRates[self.sectorIdArray=='c'])
+        savingsSumF              = sum(self.savingsRates[self.sectorIdArray=='f'])
         
-        self.wagesC              = numCalc.calculateWages(self.totalCapitalC, self.totalLaborC)
-        self.wagesF              = numCalc.calculateWages(self.totalCapitalF, self.totalLaborF)
-        self.rentC               = numCalc.calculateRents(self.totalCapitalC, self.totalLaborC)
-        self.rentF               = numCalc.calculateRents(self.totalCapitalF, self.totalLaborF)
-        self.productionC         = numCalc.calculateProduction(self.totalCapitalC, self.totalLaborC)
-        self.productionF         = numCalc.calculateProduction(self.totalCapitalF, self.totalLaborF)
-        self.consumptions        = numCalc.calculateConsumptions(self.savingsRates, self.incomes)
-        self.avgSavingsC         = numCalc.calculateAvgSavingsC(self.occupNumberC, self.savingsRates, self.sectorIdArray, savingsSumC)
-        self.avgSavingsF         = numCalc.calculateAvgSavingsF(self.occupNumberF, self.savingsRates, self.sectorIdArray, savingsSumF)
-        self.incomes             = numCalc.calculateIncomes(self.capitalsC, self.capitalsF, self.rentC, self.rentF,\
-                                                    self.wagesC, self.wagesF, self.laborsC, self.laborsF)
-        toc = time.perf_counter()
-
-        print(f"CalculateVariables{toc - tic:0.4f} seconds")   
-          
-
-    def pickCandidateAndBestNeighbor(self):
+        self.wagesC              = self.calculateWages(self.totalCapitalC, self.totalLaborC)
+        self.wagesF              = self.calculateWages(self.totalCapitalF, self.totalLaborF)
+        self.rentC               = self.calculateRents(self.totalCapitalC, self.totalLaborC)
+        self.rentF               = self.calculateRents(self.totalCapitalF, self.totalLaborF)
+        self.productionC         = self.totalCapitalC ** par.beta * self.totalLaborF ** par.alpha  
+        self.productionF         = self.totalCapitalF ** par.beta * self.totalLaborF ** par.alpha 
+        self.avgCapitalC         = self.totalCapitalC/par.numOfAgents
+        self.avgCapitalF         = self.totalCapitalF/par.numOfAgents 
+        self.avgSavingsC         = self.calculateAvgSavings(self.occupNumberC, self.savingsRates, savingsSumC)
+        self.avgSavingsF         = self.calculateAvgSavings(self.occupNumberF, self.savingsRates, savingsSumF)
+        self.incomes             = self.wagesC * self.laborsC + self.wagesF * self.laborsF + self.rentC * self.capitalsC + self.rentF * self.capitalsF 
+        self.incomesC            = self.sortIncomes('c')
+        self.incomesF            = self.sortIncomes('f')
+        self.consumptions        = self.incomes * (np.ones(len(self.savingsRates)) - self.savingsRates)
+        self.maxConsumC          = self.getMaxConsumption('c', self.occupNumberC)
+        self.maxConsumF          = self.getMaxConsumption('f', self.occupNumberF)
+        self.binarySectorId      = self.transcriptSectorIdArray()
+        self.eqCapitalC          = sum((self.savingsRates[self.sectorIdArray=='c']*self.wagesC)/(par.depreciation-self.savingsRates[self.sectorIdArray=='c']*self.rentC))/self.occupNumberC
+        self.eqCapitalF          = sum((self.savingsRates[self.sectorIdArray=='f']*self.wagesF)/(par.depreciation-self.savingsRates[self.sectorIdArray=='f']*self.rentF))/self.occupNumberF
         
-        self.candidate, self.bestNeighbor          = self.manager.pickCandidateAndBestNeighbor\
-                                                         (self.networkGraph, self.consumptions)         
 
-              
-    def pickNextUpdateTime(self, _tau):
-        
-        self.updateTime                            = self.time +\
-                                                     np.random.exponential(scale=_tau/par.numOfAgents) 
+    def calculateWages(self, _totalCapital, _totalLabor):
     
-    def getResults(self):
-        
-        tic = time.perf_counter() 
-        self.capitalsC, self.capitalsF,\
-        self.totalLaborC, self.totalLaborF         = self.integrator.returnModelSolutions\
-                                                    (self.capitalsC, self.capitalsF,\
-                                                     self.totalLaborC, self.totalLaborF,\
-                                                     self.sectorIdArray, self.incomes, self.savingsRates,\
-                                                     self.time, self.updateTime)  
-        toc = time.perf_counter()
+        if _totalLabor != 0:
+            wages = par.alpha * _totalLabor ** (par.alpha - 1) * _totalCapital ** par.beta    
+        else: 
+            wages = 0
+        return wages
+    
+   
+    def calculateRents(self, _totalCapital, _totalLabor):
 
-        #print(f"RunIntegrator{toc - tic:0.4f} seconds")          
+        if _totalCapital != 0:
+            rent =  par.beta * _totalLabor ** par.alpha * _totalCapital ** (par.beta - 1)  
+        else: 
+            rent = 0
+        return rent
             
+    
+    
+    def calculateAvgSavings(self, _occupNumber, _savingsRates, _savingsSum):
+
+        if _occupNumber != 0:
+            avgSavings = _savingsSum/_occupNumber
+        else:
+            avgSavings = None
+        return avgSavings
+
+
+    def getMaxConsumption(self, _sectorId, _occupNumber):
+    
+        if _occupNumber == 0:
+            return None
+        
+        maxConsumption = max(self.consumptions[np.where(self.sectorIdArray==_sectorId)])
+        return maxConsumption  
+
+
+    def transcriptSectorIdArray(self):
+    
+        binarySectorId = np.zeros(par.numOfAgents)
+        binarySectorId[np.where(self.sectorIdArray=='c')] = 1
+        binarySectorId[np.where(self.sectorIdArray=='f')] = 2
+        return(binarySectorId)
+ 
+        
+        
+    
+    def getResults(self, _currentUpdate, _nextUpdate):
+        
+        self.capitalsC, self.capitalsF,\
+        self.totalLaborC, self.totalLaborF               = integr.RCK_Integrator().returnModelSolutions\
+                                                         (self.capitalsC, self.capitalsF,\
+                                                          self.totalLaborC, self.totalLaborF,\
+                                                          self.sectorIdArray, self.incomes, self.savingsRates,\
+                                                          _currentUpdate, _nextUpdate)  
+    
+     
+     
+    def pickCandidateAndBestNeighbor(self):
+
+        self.candidate                                   = np.random.randint(par.numOfAgents)
+        neighborsOfCandidate                             = np.where(self.neighborhoodMatrix[self.candidate] == 1)[0]
+        self.neighborsConsumptions                       = self.consumptions[neighborsOfCandidate]
+        self.bestNeighbor                                = neighborsOfCandidate[np.argmax(self.neighborsConsumptions)] 
+        
+        self.bestNeighborVector                          = np.zeros(par.numOfAgents)
+        if self.sectorIdArray[self.bestNeighbor] == 'c':
+            self.bestNeighborVector[self.bestNeighbor]   = 1
+        else:
+            self.bestNeighborVector[self.bestNeighbor]   = 2   
+
+               
                     
     def copySavingsRateOfBestNeighbor(self):
-
-        if self.consumptions[self.bestNeighbor] > self.consumptions[self.candidate]:
     
-            self.savingsRates[self.candidate]      = self.savingsRates[self.bestNeighbor] + np.random.uniform(par.startEps, par.endEps, size=1)
+       if np.random.rand() < par.explorationProb:
+            self.savingsRates[self.candidate]            = np.random.rand()
+            if self.sectorIdArray[self.candidate] == 'c':
+                self.sectorIdArray[self.candidate]       = 'f'
+            else:
+                self.sectorIdArray[self.candidate]       = 'c'
+            return 0
+
+       if self.consumptions[self.bestNeighbor] > self.consumptions[self.candidate]:
+            self.savingsRates[self.candidate]            = self.savingsRates[self.bestNeighbor] + np.random.uniform(par.startEps, par.endEps, size=1)
+            
+            if self.sectorIdArray[self.candidate]       != self.sectorIdArray[self.bestNeighbor]:
+                self.sectorCrossCounter[self.index,\
+                                        self.candidate]  = 1
+                
+            self.sectorIdArray[self.candidate]           = self.sectorIdArray[self.bestNeighbor]
             
             while (self.savingsRates[self.candidate] > 1) or (self.savingsRates[self.candidate] < 0):
-            
-                self.savingsRates[self.candidate]  = self.savingsRates[self.bestNeighbor] + np.random.uniform(par.startEps, par.endEps, size=1)
-
+                self.savingsRates[self.candidate]        = self.savingsRates[self.bestNeighbor] + np.random.uniform(par.startEps, par.endEps, size=1)
+                self.sectorIdArray[self.candidate]       = self.sectorIdArray[self.bestNeighbor]
+                
+         
         
-        
-    def copySectorOfBestNeighbor(self):
-    
-        self.sectorIdArray[self.candidate]         = self.sectorIdArray[self.bestNeighbor]  
 
     def updateSavingsSector(self):
 
-        savingsRatesC      = np.zeros(len(self.savingsRates))
+        savingsRatesC                                    = np.zeros(len(self.savingsRates))
         savingsRatesC[np.where(self.sectorIdArray=='c')] = self.savingsRates[self.sectorIdArray=='c']
         savingsRatesC[np.where(self.sectorIdArray=='f')] = None
         
-        savingsRatesF      = np.zeros(len(self.savingsRates))
+        savingsRatesF                                    = np.zeros(len(self.savingsRates))
         savingsRatesF[np.where(self.sectorIdArray=='f')] = self.savingsRates[self.sectorIdArray=='f']
         savingsRatesF[np.where(self.sectorIdArray=='c')] = None
         
-        
-        self.savingsRatesC = savingsRatesC
-        self.savingsRatesF = savingsRatesF  
+        self.savingsRatesC                               = savingsRatesC
+        self.savingsRatesF                               = savingsRatesF  
+                   
+                   
+                   
                      
-    def updateSystemTime(self):
-   
-        self.time                                  = self.updateTime
+    def sortIncomes(self, _sector):
+    
+        if _sector == 'c':
+            sector2 = 'f'
+        else:
+            sector2 = 'c'
+            
+        incomes                                          = np.zeros(len(self.incomes))
+        incomes[np.where(self.sectorIdArray==_sector)]   = self.incomes[self.sectorIdArray==_sector]
+        incomes[np.where(self.sectorIdArray==sector2)]   = None
         
+        return incomes
+  
+  
+    
+    def createEmptyArrays(self):
+
+        self.totalLaborCVector    = np.zeros(len(self.updateTimeline))
+        self.totalLaborFVector    = np.zeros(len(self.updateTimeline))
+
+        self.wagesCVector         = np.zeros(len(self.updateTimeline))
+        self.wagesFVector         = np.zeros(len(self.updateTimeline))
+
+        self.rentCVector          = np.zeros(len(self.updateTimeline))
+        self.rentFVector          = np.zeros(len(self.updateTimeline))
+
+        self.productionCVector    = np.zeros(len(self.updateTimeline))
+        self.productionFVector    = np.zeros(len(self.updateTimeline))
+
+        self.totalCapitalCVector  = np.zeros(len(self.updateTimeline))
+        self.totalCapitalFVector  = np.zeros(len(self.updateTimeline))
+        
+        self.occupNumberCVector   = np.zeros(len(self.updateTimeline))
+        self.occupNumberFVector   = np.zeros(len(self.updateTimeline))
+        
+        self.avgCapitalCVector    = np.zeros(len(self.updateTimeline))
+        self.avgCapitalFVector    = np.zeros(len(self.updateTimeline))
+
+        self.avgSavingsCVector    = np.zeros(len(self.updateTimeline))
+        self.avgSavingsFVector    = np.zeros(len(self.updateTimeline))
+        
+        self.maxConsumCVector     = np.zeros(len(self.updateTimeline))
+        self.maxConsumFVector     = np.zeros(len(self.updateTimeline))
+        
+        self.eqCapitalCVector     = np.zeros(len(self.updateTimeline))
+        self.eqCapitalFVector     = np.zeros(len(self.updateTimeline))
+               
+        
+        self.savingsRatesCMatrix  = np.zeros((len(self.updateTimeline), par.numOfAgents))
+        self.savingsRatesFMatrix  = np.zeros((len(self.updateTimeline), par.numOfAgents))
+
+        self.capitalsCMatrix      = np.zeros((len(self.updateTimeline), par.numOfAgents))
+        self.capitalsFMatrix      = np.zeros((len(self.updateTimeline), par.numOfAgents))
+
+        self.incomesMatrix        = np.zeros((len(self.updateTimeline), par.numOfAgents))
+        self.incomesCMatrix       = np.zeros((len(self.updateTimeline), par.numOfAgents))
+        self.incomesFMatrix       = np.zeros((len(self.updateTimeline), par.numOfAgents))
+        
+        
+        self.savingsRatesMatrix   = np.zeros((len(self.updateTimeline), par.numOfAgents))
+        self.consumptionsMatrix   = np.zeros((len(self.updateTimeline), par.numOfAgents))
+        
+        self.sectorIdMatrix       = np.zeros((len(self.updateTimeline), par.numOfAgents))
+        self.sectorCrossCounter   = np.zeros((len(self.updateTimeline), par.numOfAgents))
+        self.bestNeighborMatrix   = np.zeros((len(self.updateTimeline), par.numOfAgents))
         
      
-    def wrightInitArrayEntries(self):
         
-        tic = time.perf_counter()
-        self.timeVector           = self.time
+        
 
-        self.totalLaborCVector    = self.totalLaborC
-        self.totalLaborFVector    = self.totalLaborF
+        
+    def fillResults(self):          
 
-        self.wagesCVector         = self.wagesC
-        self.wagesFVector         = self.wagesF
-
-        self.rentCVector          = self.rentC
-        self.rentFVector          = self.rentF
-
-        self.productionCVector    = self.productionC
-        self.productionFVector    = self.productionF
-
-        self.totalCapitalCVector  = self.totalCapitalC
-        self.totalCapitalFVector  = self.totalCapitalF
-
-        self.capitalsCMatrix      = self.capitalsC
-        self.capitalsFMatrix      = self.capitalsF
-
-        self.incomesMatrix        = self.incomes
-        self.savingsRatesMatrix   = self.savingsRates
-        self.consumptionsMatrix   = self.consumptions  
-
-        self.occupNumberCVector   = self.occupNumberC
-        self.occupNumberFVector   = self.occupNumberF
-
-        self.avgSavingsCVector    = self.avgSavingsC
-        self.avgSavingsFVector    = self.avgSavingsF
-
-        self.savingsRatesCMatrix  = self.savingsRatesC 
-        self.savingsRatesFMatrix  = self.savingsRatesF   
-        toc = time.perf_counter()
-
-        #print(f"Wrightfirst{toc - tic:0.4f} seconds")   
-    
-                 
-    def appendResultsToArrays(self):          
+        self.totalLaborCVector[self.index]    = self.totalLaborC
+        self.totalLaborFVector[self.index]    = self.totalLaborF
         
-        tic = time.perf_counter()
-            
-        self.timeVector           = np.append(self.timeVector, self.time)
+        self.wagesCVector[self.index]         = self.wagesC
+        self.wagesFVector[self.index]         = self.wagesF
         
-        self.totalLaborCVector    = np.append(self.totalLaborCVector, self.totalLaborC)
-        self.totalLaborFVector    = np.append(self.totalLaborFVector, self.totalLaborF)
+        self.rentCVector[self.index]          = self.rentC
+        self.rentFVector[self.index]          = self.rentF
         
-        self.wagesCVector         = np.append(self.wagesCVector, self.wagesC)
-        self.wagesFVector         = np.append(self.wagesFVector, self.wagesF)
+        self.productionCVector[self.index]    = self.productionC
+        self.productionFVector[self.index]    = self.productionF
         
-        self.rentCVector          = np.append(self.rentCVector, self.rentC)
-        self.rentFVector          = np.append(self.rentFVector, self.rentF)
+        self.totalCapitalCVector[self.index]  = self.totalCapitalC
+        self.totalCapitalFVector[self.index]  = self.totalCapitalF
         
-        self.productionCVector    = np.append(self.productionCVector, self.productionC)
-        self.productionFVector    = np.append(self.productionFVector, self.productionF)
+        self.avgCapitalCVector[self.index]    = self.avgCapitalC
+        self.avgCapitalFVector[self.index]    = self.avgCapitalF
         
-        self.totalCapitalCVector  = np.append(self.totalCapitalCVector, self.totalCapitalC)
-        self.totalCapitalFVector  = np.append(self.totalCapitalFVector, self.totalCapitalF)
+        self.avgSavingsCVector[self.index]    = self.avgSavingsC
+        self.avgSavingsFVector[self.index]    = self.avgSavingsF
         
-        self.avgSavingsCVector    = np.append(self.avgSavingsCVector, self.avgSavingsC)
-        self.avgSavingsFVector    = np.append(self.avgSavingsFVector, self.avgSavingsF)
+        self.occupNumberCVector[self.index]   = self.occupNumberC
+        self.occupNumberFVector[self.index]   = self.occupNumberF
         
-        self.occupNumberCVector   = np.append(self.occupNumberCVector, self.occupNumberC)
-        self.occupNumberFVector   = np.append(self.occupNumberFVector, self.occupNumberF)
+        self.maxConsumCVector[self.index]     = self.maxConsumC
+        self.maxConsumFVector[self.index]     = self.maxConsumF
         
-        self.capitalsCMatrix      = np.vstack((self.capitalsCMatrix, self.capitalsC))
-        self.capitalsFMatrix      = np.vstack((self.capitalsFMatrix, self.capitalsF))
+        self.eqCapitalCVector[self.index]     = self.eqCapitalC
+        self.eqCapitalFVector[self.index]     = self.eqCapitalF
         
-        self.incomesMatrix        = np.vstack((self.incomesMatrix, self.incomes))
-        self.savingsRatesMatrix   = np.vstack((self.savingsRatesMatrix, self.savingsRates))
-        self.consumptionsMatrix   = np.vstack((self.consumptionsMatrix, self.consumptions)) 
+        self.capitalsCMatrix[self.index]      = self.capitalsC
+        self.capitalsFMatrix[self.index]      = self.capitalsF
         
-        self.savingsRatesCMatrix  = np.vstack((self.savingsRatesCMatrix, self.savingsRatesC))
-        self.savingsRatesFMatrix  = np.vstack((self.savingsRatesFMatrix, self.savingsRatesF))    
-        toc = time.perf_counter()
-
-        print(f"appendResults{toc - tic:0.4f} seconds")    
-
-
-
-    def appendResults(self):    
+        self.incomesMatrix[self.index]        = self.incomes
+        self.incomesCMatrix[self.index]       = self.incomesC
+        self.incomesFMatrix[self.index]       = self.incomesF
         
-        tic = time.perf_counter()
-        self.timeVector,\
-        self.totalLaborCVector, self.totalLaborFVector,\
-        self.wagesCVector, self.wagesFVector,\
-        self.rentCVector, self.rentFVector,\
-        self.productionCVector, self.productionFVector,\
-        self.totalCapitalCVector,self.totalCapitalFVector,\
-        self.avgSavingsCVector, self.avgSavingsFVector,\
-        self.occupNumberCVector, self.occupNumberFVector,\
-                                    = numPend.appendResultsToVectors(self.timeVector, self.time,\
-                                                                          self.totalLaborCVector, self.totalLaborC,\
-                                                                          self.totalLaborFVector, self.totalLaborF,\
-                                                                          self.wagesCVector, self.wagesC,\
-                                                                          self.wagesFVector, self.wagesF,\
-                                                                          self.rentCVector, self.rentC,\
-                                                                          self.rentFVector, self.rentF,\
-                                                                          self.productionCVector, self.productionC,\
-                                                                          self.productionFVector, self.productionF,\
-                                                                          self.totalCapitalCVector, self.totalCapitalC,\
-                                                                          self.totalCapitalFVector, self.totalCapitalF,\
-                                                                          self.avgSavingsCVector, self.avgSavingsC,\
-                                                                          self.avgSavingsFVector, self.avgSavingsF,\
-                                                                          self.occupNumberCVector, self.occupNumberC,\
-                                                                          self.occupNumberFVector, self.occupNumberF)
+        self.savingsRatesMatrix[self.index]   = self.savingsRates
+        self.consumptionsMatrix[self.index]   = self.consumptions
         
+        self.savingsRatesCMatrix[self.index]  = self.savingsRatesC
+        self.savingsRatesFMatrix[self.index]  = self.savingsRatesF  
         
-        self.capitalsCMatrix, self.capitalsFMatrix,\
-        self.incomesMatrix, self.savingsRatesMatrix,\
-        self.consumptionsMatrix, self.savingsRatesCMatrix,\
-        self.savingsRatesFMatrix  =  self.numPend.appendResultsToMatrices(self.capitalsCMatrix, self.capitalsC,\
-                                                                          self.capitalsFMatrix, self.capitalsF,\
-                                                                          self.incomesMatrix, self.incomes,\
-                                                                          self.savingsRatesMatrix, self.savingsRates,\
-                                                                          self.consumptionsMatrix, self.consumptions,\
-                                                                          self.savingsRatesCMatrix, self.savingsRatesC,\
-                                                                          self.savingsRatesFMatrix, self.savingsRatesF)
+        self.sectorIdMatrix[self.index]       = self.binarySectorId
+        self.bestNeighborMatrix[self.index]   = self.bestNeighborVector
         
         
         
-        
-        toc = time.perf_counter()
-
-        print(f"appendResults{toc - tic:0.4f} seconds")  
-        
+               
 if __name__ == '__main__':
 
 
     myProjectRCK       = ProjectRCK()
-    tau=400
     
-    myProjectRCK.runModel(tau)
+    myProjectRCK.runModel(par.tau, par.seed, par.subvention)
+    #import timeit
+    
+    #print(timeit.timeit(myProjectRCK.runModel(tau), number=10))
 
 
 ''' END '''

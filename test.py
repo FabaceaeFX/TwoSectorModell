@@ -1,9 +1,7 @@
 import numpy    as np
 import networkx as nx
-import pickle   as pickle
-import pandas as pd
 import matplotlib.pyplot as plt 
-from numba import njit
+import matplotlib.cm as cm
 
 networkGraph             = nx.complete_graph(6)
 candidate                 = 1
@@ -18,82 +16,48 @@ ones                      = np.ones(len(savingsRates))
 cleanIndex                = np.where(capitalsC  != 0)
 fossilIndex               = np.where(capitalsF != 0)
 
-sectorIdArray             = np.empty(6, np.unicode_)
-sectorIdArray[cleanIndex] = ('c'+str(cleanIndex))
-sectorIdArray[fossilIndex] = ('f'+str(fossilIndex))
 
 
 
 
-indexC                    = np.where(sectorIdArray =='c')
-indexF                    = np.where(sectorIdArray=='f')
-
-NumberInSectorF           = sum(sectorIdArray=='c')
-NumberInSectorC           = sum(sectorIdArray=='f')
-
-capitalDotsC              = np.zeros(6)
-capitalDotsC[indexC]      = savingsRates[indexC] - capitalsC[indexC]
 
 
 
-capitalsC                 = np.array([1,0,1,1,1,0])
-capitalsF                 = np.array([0,1,1,0,0,1])
-laborsC                   = np.array([1,0,0,1,1,0])
-laborsF                   = np.array([0,1,1,0,0,1])
-initLaborsC              = np.random.uniform(1/5, 0.01, size=5)
-wagesC=3
-wagesF=1
-
-rentC=1
-rentF=3
-
-t=np.array([1])
-
-incomes = wagesC * laborsC + wagesF * laborsF + rentC * capitalsC + rentF * capitalsF 
 
 
-microDataFrame = pd.DataFrame({"capitalsC": [capitalsC], "capitalsF": [capitalsF], "laborC": [laborsC]}, index = t)
+# Define numbers of generated data points and bins per axis.
+N_numbers = 100000
+N_bins = 100
 
-t=np.array([2]) 
-
-
-microDataFrame3 = pd.DataFrame({"capitalsC": [capitalsC], "capitalsF": [capitalsF], "laborC": [laborsC]}, index = t)
+# set random seed 
+np.random.seed(0)
 
 
 
-microDataFrame = microDataFrame.append(microDataFrame3)
+# Generate 2D normally distributed numbers.
+x, y = np.random.multivariate_normal(
+        mean=[0.0, 0.0],      # mean
+        cov=[[1.0, 0.4],
+             [0.4, 0.25]],    # covariance matrix
+        size=N_numbers
+        ).T                   # transpose to get columns
 
-mc = list(microDataFrame["capitalsC"])
+print(x, x.shape, y, y.shape)
 
-#plt.plot( mc, microDataFrame.index)
-#plt.show()
+# Construct 2D histogram from data using the 'plasma' colormap
+plt.hist2d(x, y, bins=N_bins, cmap='plasma')
 
+# Plot a colorbar with label.
+cb = plt.colorbar()
+cb.set_label('Number of entries')
 
-#print(capitalsC.shape)
-#capitalsC = np.expand_dims(capitalsC, axis=(0))
-#capitalsC = np.expand_dims(capitalsC, axis=(0))
-#print(capitalsC.shape)
+# Add title and labels to plot.
+plt.title('Heatmap of 2D normally distributed data points')
+plt.xlabel('x axis')
+plt.ylabel('y axis')
 
-@njit
-def func(capitalsC):
-    capitalsCMatrix      = np.vstack((capitalsC, capitalsC))
-    print(capitalsCMatrix.shape)
-    capitalsC            = np.expand_dims(capitalsC, axis=0)
-    capitalsCMatrix      = np.vstack((capitalsCMatrix, capitalsC))
-    capitalsCMatrix      = np.vstack((capitalsCMatrix, capitalsC))
-    capitalsCMatrix      = np.vstack((capitalsCMatrix, capitalsC))
-    
-    print(capitalsCMatrix, capitalsCMatrix.shape)
-    
-
-if __name__ == '__main__':
-
-    capitalsC = np.zeros(5)
-    func(capitalsC)
-
-
-''' END '''
-
+# Show the plot.
+plt.show()
 
 
 
