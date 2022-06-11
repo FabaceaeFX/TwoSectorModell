@@ -9,88 +9,63 @@ import HarryPlotter  as plot
 class BifurcationSeeker:
 
     def __init__(self):
-        
         pass
         
         
-    def scanBifurcParamRegimes(self):
-        
-        self.initBifurcParamArray()
-        self.initBifurcationMatrix()
-       
-        
-        for bifurcParamIndex in range(0, len(self.bifurcParamArray)):
-            
-            self.initSingleBifurcParamSavingsRates()
-            self.iterateForSingleBifurcParamValue(bifurcParamIndex)
-            self.fillBifurcationMatrix(bifurcParamIndex)
-            
-        plot.HarryPlotter().plotHeatMap(self.bifurcationMatrixC, self.bifurcParamArray)
-        plot.HarryPlotter().plotHeatMap(self.bifurcationMatrixF, self.bifurcParamArray)
+    def scanRegimes(self):  
+        self.initArray()
+        self.initBifurcationMatrix()  
+        for Index in range(0, len(self.array)):   
+            self.initSingleSavingsRates()
+            self.iterateForSingleValue(Index)
+            self.fillBifurcationMatrix(Index)
+        plot.HarryPlotter().plotMultiHeatMap(self.bifurcationMatrixC, self.bifurcationMatrixF, self.array)
+        #plot.HarryPlotter().plotHeatMap(self.bifurcationMatrixF, self.array)  
         
         
-        
-    def initBifurcParamArray(self):
-        
-        self.bifurcParamArray = np.linspace(par.bifurcParamMin, par.bifurcParamMax, int((par.bifurcParamMax-par.bifurcParamMin)/par.deltaBifurcParam+1))  
+    def initArray(self):
+        numOfTicks = int((par.paramMax-par.paramMin)/par.paramDelta+1)
+        self.array = np.linspace(par.paramMin, par.paramMax, numOfTicks )  
 
         
     def initBifurcationMatrix(self):
-    
-        self.bifurcationMatrixC = np.zeros((len(self.bifurcParamArray), par.iterationMax*par.numOfAgents))
-        self.bifurcationMatrixF = np.zeros((len(self.bifurcParamArray), par.iterationMax*par.numOfAgents))
-        
+        self.bifurcationMatrixC = np.zeros((len(self.array), par.iterationMax*par.numOfAgents))
+        self.bifurcationMatrixF = np.zeros((len(self.array), par.iterationMax*par.numOfAgents))        
         
                    
-    def initSingleBifurcParamSavingsRates(self):
-    
-        self.singleBifurcParamSavingsC = np.zeros(par.iterationMax*par.numOfAgents)
-        self.singleBifurcParamSavingsF = np.zeros(par.iterationMax*par.numOfAgents)   
+    def initSingleSavingsRates(self):
+        self.singleSavingsC = np.zeros(par.iterationMax*par.numOfAgents)
+        self.singleSavingsF = np.zeros(par.iterationMax*par.numOfAgents)   
                   
         
-    def iterateForSingleBifurcParamValue(self, _bifurcParamIndex):
-    
- 
+    def iterateForSingleValue(self, _Index):
         seed  = 1
-        subvention = 1
-        
         for iterationIndex in range(0, par.iterationMax):
-             
-            start    =  iterationIndex*par.numOfAgents
-            stop     = (iterationIndex+1)*par.numOfAgents   
-            bifurcParamValue = self.bifurcParamArray[_bifurcParamIndex]
-            
-            if par.bifurcationParameter == 'tau':
-                tau = bifurcParamValue
-                subvention = par.subvention
-                
-            if par.bifurcationParameter == 'subvention':
-                subvention = bifurcParamValue
+            start     =  iterationIndex*par.numOfAgents
+            stop      = (iterationIndex+1)*par.numOfAgents   
+            parameter = self.array[_Index]
+            print(parameter)
+            if par.parameter == 'tau':
+                tau = parameter
+                subvention = par.subvention    
+            if par.parameter == 'subvention':
+                subvention = parameter
                 tau = par.tau
-            
-            
-            self.singleBifurcParamSavingsC[start:stop],\
-            self.singleBifurcParamSavingsF[start:stop] = rck.ProjectRCK().runModel(tau, seed, subvention)
-            
+            self.singleSavingsC[start:stop],\
+            self.singleSavingsF[start:stop] = rck.ProjectRCK().runModel(tau, seed, subvention, False)
             seed += 1
                 
-        
-        
-        
-    def fillBifurcationMatrix(self, _bifurcParamIndex):
-    
-        self.bifurcationMatrixC[_bifurcParamIndex,:] = self.singleBifurcParamSavingsC
-        self.bifurcationMatrixF[_bifurcParamIndex,:] = self.singleBifurcParamSavingsF
+  
+    def fillBifurcationMatrix(self, _Index):
+        self.bifurcationMatrixC[_Index,:] = self.singleSavingsC
+        self.bifurcationMatrixF[_Index,:] = self.singleSavingsF
             
 
 if __name__ == '__main__':
 
 
     myBifurcationSeeker     = BifurcationSeeker()
-
-    
-    
-    myBifurcationSeeker.scanBifurcParamRegimes()
+    myBifurcationSeeker.scanRegimes()
 
 
 ''' END '''            

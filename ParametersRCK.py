@@ -4,8 +4,8 @@ import numpy as np
 
 numOfAgents            = 100
 networkTopology        = 'AllToAll'
-tmax                   = 100000
-tau                    = 200
+tmax                   = 10000
+tau                    = 280
 
 
 startEps               = -0.01
@@ -16,14 +16,15 @@ alpha                  = 0.5
 beta                   = 1 - alpha        
 populationGrowthRate   = 0
 explorationProb        = 0.001
-subvention             = 1
+subvention             = 1.1
 steuer                 = 1
 
-seed                   = 10
+seed                   = 2      
 
 #General plot settings
 
 plotSetting            = 'Two'
+singleRun              = False
 
 tmin                   = 0
 tend                   = 100000
@@ -37,12 +38,12 @@ ticksize               = 25
 
 #Bifurcation diagramm
 
-bifurcationParameter   = 'subvention'
-bifurcParamMin         = 1
-bifurcParamMax         = 1.1
-deltaBifurcParam       = 0.001
-iterationMax           = 4
-numOfBins              = 100
-vmax                   = 70
+parameter              = 'tau'
+paramMin               = 100
+paramMax               = 300
+paramDelta             = 1
+iterationMax           = 1
+numOfBins              = 1000
+
 
 

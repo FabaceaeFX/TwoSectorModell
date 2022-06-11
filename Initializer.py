@@ -20,29 +20,37 @@ class Initializer:
      
     def createInitCapitals(self):
     
-        capitalsC     = np.random.binomial(n=1, p=0.5, size=[par.numOfAgents])
-        capitalsF     = np.ones(par.numOfAgents)-capitalsC
-        print(capitalsF, capitalsC)
+        if par.singleRun:
         
-        #capitalsC              = np.ones(par.numOfAgents)
-        #capitalsC[0:50]        = 0
-        #capitalsF              = np.ones(par.numOfAgents)-capitalsC
+            capitalsF     = np.random.binomial(n=1, p=0.5 , size=[par.numOfAgents])
+            capitalsC     = np.ones(par.numOfAgents)-capitalsF
+            
+        else:
+        
+            capitalsC              = np.ones(par.numOfAgents)
+            capitalsC[0:50]        = 0
+            capitalsF              = np.ones(par.numOfAgents)-capitalsC
+            
+        #print(capitalsF, capitalsC)
 
         
         return capitalsC, capitalsF
         
     def createInitLabors(self):
+    
+        if par.singleRun:
         
-        laborIndexes         = np.random.binomial(n=1, p=0.5, size=[par.numOfAgents])
-        laborsC              = laborIndexes*np.random.uniform(1/par.numOfAgents, 0.01, size=par.numOfAgents)
-        laborsF              = (np.ones(par.numOfAgents)-laborIndexes)*np.random.uniform(1/par.numOfAgents, 0.01, size=par.numOfAgents)
+            laborsF               = np.random.binomial(n=1, p=0.5, size=[par.numOfAgents])
+            laborsC               = np.ones(par.numOfAgents)-laborsF
         
-
-        #laborsC              = np.ones(par.numOfAgents)
-        #laborsC[0:50]        = 0
-        #laborsF              = np.ones(par.numOfAgents)
-        #laborsF[50:100]       = 0
+        else:
         
+            laborsC              = np.ones(par.numOfAgents)
+            laborsC[0:50]        = 0
+            laborsF              = np.ones(par.numOfAgents)
+            laborsF[50:100]      = 0
+            
+        #print(laborsF, laborsC)
   
         return laborsC, laborsF
     
