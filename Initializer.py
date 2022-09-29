@@ -7,22 +7,21 @@ class Initializer:
         
         pass
         
-    def getInitVariables(self):
+    def getInitVariables(self, _probability):
         
-        capitalsC, capitalsF = self.createInitCapitals()
+        capitalsC, capitalsF = self.createInitCapitals(_probability)
         laborsC, laborsF     = self.createInitLabors()
         savingsRates         = self.createInitSavingsRates()
         sectorIdArray        = self.createSectorIdentityArray(capitalsC, capitalsF)
         bestNeighborVector   = np.zeros(par.numOfAgents)
-        
         return (capitalsC, capitalsF, laborsC, laborsF, sectorIdArray, savingsRates, bestNeighborVector)
     
      
-    def createInitCapitals(self):
+    def createInitCapitals(self, _probability):
     
         if par.singleRun:
         
-            capitalsF     = np.random.binomial(n=1, p=0.5 , size=[par.numOfAgents])
+            capitalsF     = np.random.binomial(n=1, p=_probability , size=[par.numOfAgents])
             capitalsC     = np.ones(par.numOfAgents)-capitalsF
             
         else:
@@ -30,10 +29,7 @@ class Initializer:
             capitalsC              = np.ones(par.numOfAgents)
             capitalsC[0:50]        = 0
             capitalsF              = np.ones(par.numOfAgents)-capitalsC
-            
-        #print(capitalsF, capitalsC)
-
-        
+          
         return capitalsC, capitalsF
         
     def createInitLabors(self):
@@ -57,7 +53,6 @@ class Initializer:
     def createInitSavingsRates(self):
     
         savingsRates         = np.random.rand(par.numOfAgents)
-        
         return savingsRates    
        
     def createSectorIdentityArray(self, _capitalsC, _capitalsF):   

@@ -19,6 +19,8 @@ class NetworkCreator:
     def chooseNetworkGraph(self):
         if par.networkTopology == "AllToAll":
             networkGraph       = nx.complete_graph(par.numOfAgents)
+        if par.networkTopology == "Binomial":
+            networkGraph       = nx.gnp_random_graph(par.numOfAgents, 0.5, None, False)
         return networkGraph
             
             

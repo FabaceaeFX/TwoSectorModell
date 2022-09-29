@@ -9,6 +9,7 @@ import RCK_Integrator   as integr
 import networkx         as nx
 import NetworkCreator   as nc
 import HarryPlotter     as plot
+import SingleHarryPlotter as splot
 import ParametersRCK    as par
 
 
@@ -19,14 +20,14 @@ class ProjectRCK:
         pass
         
     
-    def runModel(self, _tau, _seed, _subvention, _isSingleRun):
+    def runModel(self, _tau, _seed, _subvention, _isSingleRun, _probabilityDist):
         self.index               = 0
         self.setRandomSeed(_seed)
         self.getNetworkGraph()
         self.createUpdateArray(_tau)
         self.createUpdateTimeline()
         self.createEmptyArrays()
-        self.initializeVariables()
+        self.initializeVariables(_probabilityDist)
         self.calculateVariables(_subvention)
         self.updateSavingsSector()
         self.pickCandidateAndBestNeighbor()
@@ -41,7 +42,7 @@ class ProjectRCK:
             self.fillResults()
             self.index += 1
         if _isSingleRun:
-            plot.HarryPlotter().plotVectors(self.updateTimeline,\
+            splot.SingleHarryPlotter().plotVectors(self.updateTimeline,\
                                         self.capitalsCMatrix, self.capitalsFMatrix,\
                                         self.totalCapitalCVector, self.totalCapitalFVector,\
                                         self.avgCapitalCVector, self.avgCapitalFVector,\
@@ -55,8 +56,22 @@ class ProjectRCK:
                                         self.incomesCMatrix, self.incomesFMatrix, \
                                         self.incomesMatrix, self.consumptionsMatrix,\
                                         self.sectorIdMatrix, self.bestNeighborMatrix,\
-                                        self.eqCapitalCVector, self.eqCapitalFVector)
-        return(self.savingsRatesC, self.savingsRatesF)
+                                        self.eqCapitalCVector, self.eqCapitalFVector,\
+                                        self.eqReturnsCVector, self.eqReturnsFVector)                          
+        return(self.savingsRatesC, self.savingsRatesF, self.occupNumberC, self.occupNumberF)
+               #self.avgSavingsCVector, self.avgSavingsFVector, self.avgCapitalCVector, self.avgCapitalFVector,\
+               #self.totalCapitalCVector, self.totalCapitalFVector, self.capitalsCMatrix, self.capitalsFMatrix,\
+               #self.rentCVector, self.rentFVector, self.wagesCVector, self.wagesFVector,\
+               #self.productionCVector, self.productionFVector,cself.occupNumberCVector, self.occupNumberFVector,\
+               #self.maxConsumCVector, self.maxConsumFVector, self.savingsRatesCMatrix, self.savingsRatesFMatrix,\
+               #self.incomesCMatrix, self.incomesFMatrix, self.incomesMatrix, self.consumptionsMatrix,\
+               #self.sectorIdMatrix, self.bestNeighborMatrix, self.eqCapitalCVector, self.eqCapitalFVector,\
+               #self.updateTimeline)
+                                        
+                                        
+                                        
+                                        
+                                        
      
      
     def setRandomSeed(self, _seed):
@@ -77,11 +92,11 @@ class ProjectRCK:
         self.updateTimeline[1:]                       = np.cumsum(self.updateArray)
         
         
-    def initializeVariables(self):  
+    def initializeVariables(self, _probabilityDist):  
         self.capitalsC, self.capitalsF,\
         self.laborsC, self.laborsF,\
         self.sectorIdArray, self.savingsRates,\
-        self.bestNeighborVector                  = init.Initializer().getInitVariables() 
+        self.bestNeighborVector                  = init.Initializer().getInitVariables(_probabilityDist) 
     
         
     def calculateVariables(self,  _subvention):
@@ -100,8 +115,8 @@ class ProjectRCK:
         self.rentF               = self.calculateRents(self.totalCapitalF, self.totalLaborF)
         self.productionC         = self.totalCapitalC ** par.beta * self.totalLaborF ** par.alpha  
         self.productionF         = self.totalCapitalF ** par.beta * self.totalLaborF ** par.alpha 
-        self.avgCapitalC         = self.totalCapitalC/par.numOfAgents
-        self.avgCapitalF         = self.totalCapitalF/par.numOfAgents 
+        self.avgCapitalC         = self.totalCapitalC/self.occupNumberC
+        self.avgCapitalF         = self.totalCapitalF/self.occupNumberF 
         self.avgSavingsC         = self.calculateAvgSavings(self.occupNumberC, self.savingsRates, savingsSumC)
         self.avgSavingsF         = self.calculateAvgSavings(self.occupNumberF, self.savingsRates, savingsSumF)
         self.incomes             = self.wagesC * self.laborsC + self.wagesF * self.laborsF + self.rentC * self.capitalsC + self.rentF * self.capitalsF 
@@ -113,6 +128,8 @@ class ProjectRCK:
         self.binarySectorId      = self.transcriptSectorIdArray()
         self.eqCapitalC          = self.calculateEqCapitals(self.wagesC, self.rentC, self.occupNumberC, 'c')
         self.eqCapitalF          = self.calculateEqCapitals(self.wagesF, self.rentF, self.occupNumberF, 'f') 
+        self.eqReturnsC          = self.calculateEqReturns(self.wagesC, self.avgSavingsC,  self.occupNumberC, self.eqCapitalC)
+        self.eqReturnsF          = self.calculateEqReturns(self.wagesF, self.avgSavingsF,  self.occupNumberF, self.eqCapitalF)
         
        
     def calculateWages(self, _totalCapital, _totalLabor):
@@ -149,8 +166,22 @@ class ProjectRCK:
     def calculateEqCapitals(self, _wages, _rent, _occupNumber, _sector):
         eqCapitals = sum((self.savingsRates[self.sectorIdArray==_sector]*_wages)/(par.depreciation-self.savingsRates[self.sectorIdArray==_sector]*_rent))/_occupNumber
         if eqCapitals < 0:
-            eqCapitals = 0
+            eqCapitals = None
+        print(eqCapitals)
         return eqCapitals
+        
+        
+    def calculateEqReturns(self, _wages, _avgSavings,  _occupNumber, _eqCapitals):
+        #print(_eqCapitals)
+        if _eqCapitals == None:
+            eqReturns = None
+        elif _avgSavings == None:
+            eqReturns = None
+        else:
+            totEqCapital = _occupNumber*_eqCapitals
+            eqReturns    = par.depreciation/_avgSavings -(_occupNumber*_wages)/totEqCapital
+        return eqReturns
+        
       
            
     def transcriptSectorIdArray(self):
@@ -245,6 +276,8 @@ class ProjectRCK:
         self.maxConsumFVector     = np.zeros(len(self.updateTimeline))
         self.eqCapitalCVector     = np.zeros(len(self.updateTimeline))
         self.eqCapitalFVector     = np.zeros(len(self.updateTimeline))
+        self.eqReturnsCVector     = np.zeros(len(self.updateTimeline))
+        self.eqReturnsFVector     = np.zeros(len(self.updateTimeline))
                
         self.savingsRatesCMatrix  = np.zeros((len(self.updateTimeline), par.numOfAgents))
         self.savingsRatesFMatrix  = np.zeros((len(self.updateTimeline), par.numOfAgents))
@@ -281,6 +314,8 @@ class ProjectRCK:
         self.maxConsumFVector[self.index]     = self.maxConsumF
         self.eqCapitalCVector[self.index]     = self.eqCapitalC
         self.eqCapitalFVector[self.index]     = self.eqCapitalF
+        self.eqReturnsCVector[self.index]      = self.eqReturnsC
+        self.eqReturnsFVector[self.index]      = self.eqReturnsF
         
         self.capitalsCMatrix[self.index]      = self.capitalsC
         self.capitalsFMatrix[self.index]      = self.capitalsF
@@ -297,7 +332,7 @@ class ProjectRCK:
                
 if __name__ == '__main__':
     myProjectRCK       = ProjectRCK()
-    myProjectRCK.runModel(par.tau, par.seed, par.subvention, True)
+    myProjectRCK.runModel(par.tau, par.seed, par.subvention, True, par.probabilityDist)
     #import timeit
     #print(timeit.timeit(myProjectRCK.runModel(tau), number=10))
 
