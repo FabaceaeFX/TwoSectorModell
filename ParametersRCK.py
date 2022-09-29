@@ -1,45 +1,76 @@
 import numpy as np
 
+#General settings
 
-networkTopology       = 'AllToAll'
-
-maxTime               = 10000
-
-tau                   = 500
-
-startEps              = -0.01
-endEps                = 0.01
-numOfAgents           = 100
-  
-initSavingsRates      = np.random.rand(numOfAgents)
-
-initCapitalsC         = np.ones(numOfAgents)
-#initCapitalsC         = np.random.binomial(n=1, p=0.5, size=[numOfAgents])
-initCapitalsF         = np.zeros(numOfAgents)
-#initCapitalsF         = np.ones(numOfAgents)-initCapitalsC
-
-cleanInvestorIndex    = np.where(initCapitalsC == 1)
-fossilInvestorIndex   = np.where(initCapitalsF == 1)
-sectorIdentityArray   = np.empty(numOfAgents, np.unicode_)
-
-sectorIdentityArray[cleanInvestorIndex]  = ('c'+str(cleanInvestorIndex))
-sectorIdentityArray[fossilInvestorIndex] = ('f'+str(fossilInvestorIndex))
-
-initLaborsC           = np.random.uniform(1/numOfAgents, 0.01, size=numOfAgents)
-initLaborsF           = np.zeros(numOfAgents)
-
-depreciation          = 0.05
-
-deltaS                = 0
-
-alpha                 = 0.5
-
-beta                  = 1 - alpha
-        
-populationGrowthRate  = 0
+numOfAgents            = 100
+networkTopology        = 'AllToAll'
+tmax                   = 10000
+tau                    = 400
+probabilityDist        = 0.5
+seed                   = 10  
+singleRun              = True
+newRun                 = False
 
 
+startEps               = -0.01
+endEps                 = 0.01
+
+depreciation           = 0.01
+alpha                  = 0.5
+beta                   = 1 - alpha        
+populationGrowthRate   = 0
+explorationProb        = 0.001
+subvention             = 1
+steuer                 = 1
+
+    
+
+#General plot settings
+
+plotSetting            = 'Two'
+smin                   = 0
+smax                   = 1
+plotStart              = 0
+plotStop               = 100000
+fontsize               = 25
+ticksize               = 20
 
 
+#Bifurcation diagramm
 
-plotSetting           = 'Single'
+parameter              = 'tau'
+paramMin               = 100      
+paramMax               = 400
+paramDelta             = 20
+iterationMax           = 100
+numOfBins              = 1000
+
+fileName               = r'C:\fabaceae\Desktop\PIK\Plots\Results\tau='+ \
+                         "N=" + str(numOfAgents) + ", run = " +\
+                          str(iterationMax) + ", tmax =" + str(tmax) + \
+                          "Parameter = " + parameter + ", tau =" + str(tau) + \
+                          "Subvention =" + str(subvention) + "in range" + \
+                          str(paramMin) + str(paramMax) +'depreciation =' + str(depreciation)
+
+
+#2D Parameter Analysis
+
+param1    = 'gamma'
+param1Min = 0.5
+param1Max = 1.5
+param1Delta = 0.1
+
+param2    = 'tau'
+param2Min = 100
+param2Max = 400
+param2Delta = 20
+
+savingsTreshold = 0.2
+counterTreshold = 20
+
+TwofileName = r'C:\fabaceae\Desktop\PIK\Plots\Results\tau='+ \
+                         "N=" + str(numOfAgents) + ", run = " +\
+                          str(iterationMax) + ", tmax =" + str(tmax) + \
+                          "Parameter1 =" + param1 + "in range" + str(param1Min) + str(param1Max)+\
+                          "Parameter2 =" + param2 + "in range" + str(param2Min) + str(param2Max)
+                          
